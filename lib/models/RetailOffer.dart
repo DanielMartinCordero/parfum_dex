@@ -2,7 +2,7 @@ class RetailOffer{
   final String storeName;
   final double price;
   final String productUrl;
-  final bool? inStock;
+  final bool inStock;
 
   const RetailOffer({
     required this.storeName,
@@ -14,7 +14,7 @@ class RetailOffer{
   factory RetailOffer.fromMap(Map<String, dynamic> map) {
     return RetailOffer(
     storeName: map['storeName'] as String? ?? 'Tienda desconocida',
-    price: map['price'] as double? ?? 0.0,
+    price: (map['price'] as num?)?.toDouble() ?? 0.0,
     productUrl: map['productUrl'] as String? ?? '',
     inStock: map['inStock'] as bool? ?? true
     );
