@@ -8,7 +8,7 @@ class Perfume {
   final String id;
   final String brand;
   final String name;
-  final double nominalMl;
+  final int nominalMl;
   final String concentration;
   final String imageUrl;
   final List<String> season;
