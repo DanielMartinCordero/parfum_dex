@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:parfum_dex/screens/splash_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const SplashScreen());
 }
-
+/*
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -120,3 +121,4 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+*/
