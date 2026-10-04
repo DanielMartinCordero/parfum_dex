@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
-import 'RetailOffer.dart';
-import 'TareInfo.dart';
+import 'retail_offer.dart';
+import 'tare_info.dart';
 
 class Perfume {
   final String id;
@@ -44,7 +44,7 @@ class Perfume {
   factory Perfume.fromFirestore(DocumentSnapshot<Map<String, dynamic>> snapshot,
       SnapshotOptions? options,) {
     final data = snapshot.data();
-    if (data == null) {
+    if (data == null) { //No existe ese id en la base de datos
       debugPrint(
           'Error crítico: Documento de Perfume vacío (ID: ${snapshot.id})');
       throw Exception('El documento Firestore no contiene datos.');
