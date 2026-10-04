@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:parfum_dex/screens/splash_screen.dart';
+import 'package:parfum_dex/services/preferences_service.dart';
 
-void main() {
+Future<void> main() async {
+  await PreferencesService.init();
   runApp(const SplashScreen());
 }
 /*
