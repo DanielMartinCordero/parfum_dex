@@ -14,9 +14,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // Finalizar Onboarding: Guarda en preferencias y navega a Login
   void _completeOnboarding() async {
-    await PreferencesService.setFirstTime(false);
+    await PreferencesService.setNotFirstTime();
     if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed('/login');
+      Navigator.of(context).pushReplacementNamed('/login');
   }
 
   @override
