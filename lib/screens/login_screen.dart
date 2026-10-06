@@ -58,6 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
             TextButton(
               onPressed: () {
                 // Pendiente: Navegar a pantalla de Registro
+                Navigator.of(context).pushNamed('/register');
               },
               child: const Text('¿No tienes cuenta? Regístrate aquí'),
             )

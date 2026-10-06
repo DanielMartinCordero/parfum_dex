@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parfum_dex/screens/register_screen.dart';
 import 'package:parfum_dex/screens/splash_screen.dart';
 import 'package:parfum_dex/services/preferences_service.dart';
 // Importaremos las siguientes pantallas cuando las creemos en archivos separados
@@ -28,6 +29,7 @@ class ParfumDexApp extends StatelessWidget {
         '/': (context) => const SplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
+        '/register': (context) => const RegisterScreen(),
       },
     );
   }
