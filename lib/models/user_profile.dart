@@ -7,6 +7,10 @@ class UserProfile {
   final String displayName;
   final bool isPublic;
   final DateTime createdAt;
+  final String? genre;
+  final int? birthYear;
+  final String? scentPreference;
+
 
   const UserProfile({
     required this.uid,
@@ -15,6 +19,9 @@ class UserProfile {
     required this.displayName,
     this.isPublic = false,
     required this.createdAt,
+    this.genre,
+    this.birthYear,
+    this.scentPreference
   });
 
   // Deserialización tipada para Cloud Firestore
@@ -35,6 +42,9 @@ class UserProfile {
       isPublic: data['isPublic'] as bool? ?? false,
       // Conversión segura de Timestamp de Firestore a DateTime nativo de Dart
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      genre: data['genre'] as String?,
+      birthYear: data['birthYear'] as int?,
+      scentPreference: data['scentPreference'] as String?,
     );
   }
 
@@ -46,6 +56,34 @@ class UserProfile {
       'displayName': displayName,
       'isPublic': isPublic,
       'createdAt': Timestamp.fromDate(createdAt),
+      if (genre != null) 'genre': genre,
+      if (birthYear != null) 'birthYear': birthYear,
+      if (scentPreference != null) 'scentPreference': scentPreference,
     };
+  }
+
+  // Método copyWith para crear copias con datos actualizados
+  UserProfile copyWith({
+    String? uid,
+    String? email,
+    String? handle,
+    String? displayName,
+    bool? isPublic,
+    DateTime? createdAt,
+    String? genre,
+    int? birthYear,
+    String? scentPreference,
+  }) {
+    return UserProfile(
+      uid: uid ?? this.uid,
+      email: email ?? this.email,
+      handle: handle ?? this.handle,
+      displayName: displayName ?? this.displayName,
+      isPublic: isPublic ?? this.isPublic,
+      createdAt: createdAt ?? this.createdAt,
+      genre: genre ?? this.genre,
+      birthYear: birthYear ?? this.birthYear,
+      scentPreference: scentPreference ?? this.scentPreference,
+    );
   }
 }
