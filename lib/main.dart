@@ -24,7 +24,7 @@ class ParfumDexApp extends StatelessWidget {
         useMaterial3: true,
       ),
       // La Splash Screen es nuestra ruta inicial
-      initialRoute: '/',
+      initialRoute: '/register',
       routes: {
         '/': (context) => const SplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
