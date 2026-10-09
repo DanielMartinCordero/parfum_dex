@@ -31,6 +31,29 @@ class Perfume {
 
   bool get canBeWeighed => tareInfo != null;
 
+  /// Calcula los mililitros restantes basándose en el peso total en gramos.
+  /// Retorna `null` si este perfume no tiene datos de tara.
+  double? calculateRemainingMl(double totalWeightGrams) {
+    if (tareInfo == null) return null;
+
+    // 1. Calculamos cuánto pesa solo el líquido
+    final liquidWeight = totalWeightGrams - tareInfo!.emptyBottleWeight;
+
+    // Si pesa menos que la botella vacía, asumimos que está vacía (0 ml)
+    if (liquidWeight <= 0) return 0.0;
+
+    // 2. Volumen = Masa / Densidad
+    double remainingMl = liquidWeight / tareInfo!.liquidDensity;
+
+    // 3. Nos aseguramos de no devolver más ml de los que caben en la botella
+    if (remainingMl > nominalMl) {
+      remainingMl = nominalMl.toDouble();
+    }
+
+    // Redondeamos a 1 decimal para que sea más amigable en UI (ej. "45.2 ml")
+    return double.parse(remainingMl.toStringAsFixed(1));
+  }
+
   RetailOffer? get bestOffer {
     if (prices.isEmpty) return null;
 
