@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parfum_dex/services/database_seeder.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -55,13 +56,24 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: const Text('Ingresar', style: TextStyle(fontSize: 16)),
             ),
+            const SizedBox(height: 24),
             TextButton(
               onPressed: () {
                 // Pendiente: Navegar a pantalla de Registro
                 Navigator.of(context).pushNamed('/register');
               },
               child: const Text('¿No tienes cuenta? Regístrate aquí'),
-            )
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Pendiente: conectar con Firebase Auth en el próximo paso
+                DatabaseSeeder.insertLayton();
+              },
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: const Text('Prueba insert', style: TextStyle(fontSize: 16)),
+            ),
           ],
         ),
       ),
