@@ -18,7 +18,8 @@ class _LoginScreenState extends State<LoginScreen> {
         title: const Text('Iniciar Sesión'),
         centerTitle: true,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
+      child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -56,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: const Text('Ingresar', style: TextStyle(fontSize: 16)),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12.0),
             TextButton(
               onPressed: () {
                 // Pendiente: Navegar a pantalla de Registro
@@ -64,18 +65,9 @@ class _LoginScreenState extends State<LoginScreen> {
               },
               child: const Text('¿No tienes cuenta? Regístrate aquí'),
             ),
-            ElevatedButton(
-              onPressed: () {
-                // Pendiente: conectar con Firebase Auth en el próximo paso
-                DatabaseSeeder.insertLayton();
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text('Prueba insert', style: TextStyle(fontSize: 16)),
-            ),
           ],
         ),
+      ),
       ),
     );
   }
