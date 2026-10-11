@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
 import '../utils/validators.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -17,6 +18,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _displayName = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
+  // 1. Instanciamos el servicio de autenticación
+  final AuthService _authService = AuthService();
+  
+  // 2. Variable para controlar el estado de carga (el circulito dando vueltas)
+  bool _isLoading = false;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -24,6 +31,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  // 3. Creamos nuestra función asíncrona para manejar el botón de registro
+  Future<void> _handleRegister() async {
+    // A) Primero, validamos con nuestros Validadores (Capa Cliente)
+    if (_formKey.currentState!.validate()) {
+      
+      // B) Ponemos el estado de carga en true para mostrar el spinner
+      setState(() {
+        _isLoading = true;
+      });
+
+      // C) Extraemos los textos de los controladores
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+      final name = _displayName.text.trim();
+
+      // D) Llamamos al servicio (Capa Servidor/Infraestructura)
+      // Como devuelve un Future, usamos 'await' para esperar la respuesta.
+      final errorMessage = await _authService.registerWithEmail(email, password, name);
+
+      // E) Como la función era asíncrona (await), comprobamos que la pantalla siga existiendo
+      if (!mounted) return;
+
+      // F) Quitamos el estado de carga
+      setState(() {
+        _isLoading = false;
+      });
+
+      // G) Verificamos qué nos devolvió el servicio
+      if (errorMessage != null) {
+        // Hubo un error de Firebase (ej: el email ya existe), se lo enseñamos al usuario.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red, // Ponemos el fondo rojo para indicar error
+          ),
+        );
+      } else {
+        // No hubo error, devolvió null. ¡Registro exitoso!
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("¡Registro exitoso!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Redirigimos a la pantalla inicial
+        Navigator.of(context).pushReplacementNamed('/');
+      }
+    }
   }
 
   @override
@@ -70,15 +127,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                     const SizedBox(height: 8),
 
-                    ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // Pendiente: Implementar firebase
-                          Navigator.of(context).pushNamed('/splash_screen');
-                        }
-                      },
-                      child: Text("Registrarse")
-                    ),
+                    // 4. Mostramos el botón de registro O el indicador de carga
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : ElevatedButton(
+                            // 5. Conectamos el botón con nuestra función
+                            onPressed: _handleRegister,
+                            child: const Text("Registrarse")
+                          ),
 
                     const SizedBox(height: 4),
                     TextButton(
