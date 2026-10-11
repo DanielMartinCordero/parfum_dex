@@ -107,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 16),
 
                     TextFormField(controller: _displayName, decoration: const InputDecoration(
-                        labelText: "Nombre público (el nombre que se verá en la aplicación)", prefixIcon: Icon(Icons.person), border: OutlineInputBorder()),
+                        labelText: "Nombre de usuario (el nombre que se verá en la aplicación)", prefixIcon: Icon(Icons.person), border: OutlineInputBorder()),
                         validator: Validators.validateName,
                     ),
 

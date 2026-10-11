@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class UserProfile {
   final String uid;
   final String email;
-  final String handle;
   final String displayName;
   final bool isPublic;
   final DateTime createdAt;
@@ -15,7 +14,6 @@ class UserProfile {
   const UserProfile({
     required this.uid,
     required this.email,
-    required this.handle,
     required this.displayName,
     this.isPublic = false,
     required this.createdAt,
@@ -37,7 +35,6 @@ class UserProfile {
     return UserProfile(
       uid: snapshot.id,
       email: data['email'] as String? ?? '',
-      handle: data['handle'] as String? ?? '',
       displayName: data['displayName'] as String? ?? '',
       isPublic: data['isPublic'] as bool? ?? false,
       // Conversión segura de Timestamp de Firestore a DateTime nativo de Dart
@@ -52,7 +49,6 @@ class UserProfile {
   Map<String, dynamic> toFirestore() {
     return {
       'email': email,
-      'handle': handle,
       'displayName': displayName,
       'isPublic': isPublic,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -66,7 +62,6 @@ class UserProfile {
   UserProfile copyWith({
     String? uid,
     String? email,
-    String? handle,
     String? displayName,
     bool? isPublic,
     DateTime? createdAt,
@@ -77,7 +72,6 @@ class UserProfile {
     return UserProfile(
       uid: uid ?? this.uid,
       email: email ?? this.email,
-      handle: handle ?? this.handle,
       displayName: displayName ?? this.displayName,
       isPublic: isPublic ?? this.isPublic,
       createdAt: createdAt ?? this.createdAt,
