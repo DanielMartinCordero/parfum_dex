@@ -1,9 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart'; // Para usar debugPrint
+import 'firestore_service.dart';
 
 class AuthService {
   // 1. Instancia privada de FirebaseAuth
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Instancia de nuestro servicio de base de datos
+  final FirestoreService _firestoreService = FirestoreService();
 
   // 2. Stream para escuchar si hay usuario logueado o no
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -14,23 +18,38 @@ class AuthService {
   // 4. Método para REGISTRAR con email y contraseña
   Future<String?> registerWithEmail(String email, String password, String displayName) async {
     try {
-      // Intentamos crear el usuario en Firebase
+      // A) VALIDACIÓN: ¿Está libre el nombre de usuario?
+      bool isAvailable = await _firestoreService.isUsernameAvailable(displayName);
+      if (!isAvailable) {
+        return 'El nombre de usuario "$displayName" ya está en uso. Por favor, elige otro.';
+      }
+
+      // B) CREACIÓN EN FIREBASE AUTH
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email, 
-        password: password
+          email: email,
+          password: password
       );
 
-      // Si tiene éxito, le asignamos el nombre público (displayName)
-      await userCredential.user?.updateDisplayName(displayName);
+      final user = userCredential.user;
 
+      if (user != null) {
+        // C) Actualizamos el perfil básico de Auth
+        await user.updateDisplayName(displayName);
 
-      // Retornamos null porque no ha habido ningún error
-      return null; 
-      
+        // D) CREACIÓN EN FIRESTORE (El documento completo del perfil)
+        await _firestoreService.createUserProfile(
+          uid: user.uid,
+          email: email,
+          displayName: displayName,
+        );
+      }
+
+      return null; // Registro completo y perfecto
+
     } on FirebaseAuthException catch (e) {
       // ¡Aquí cumplimos el requisito de capturar errores específicos!
       debugPrint('Error de Firebase Auth (Registro): ${e.code}');
-      
+
       if (e.code == 'weak-password') {
         return 'La contraseña es demasiado débil (mínimo 6 caracteres).';
       } else if (e.code == 'email-already-in-use') {
@@ -52,7 +71,7 @@ class AuthService {
       return null; // Éxito, sin error
     } on FirebaseAuthException catch (e) {
       debugPrint('Error de Firebase Auth (Login): ${e.code}');
-      
+
       if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
         return 'Credenciales inválidas. Verifica tu correo y contraseña.';
       } else if (e.code == 'wrong-password') {
