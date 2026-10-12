@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart'; // <--- IMPORTANTE
 import 'firebase_options.dart'; // <--- IMPORTANTE (Asegúrate de que este archivo existe)
 import 'package:parfum_dex/screens/register_screen.dart';
 import 'package:parfum_dex/screens/splash_screen.dart';
-import 'package:parfum_dex/services/database_seeder.dart';
 import 'package:parfum_dex/services/preferences_service.dart';
 import 'package:parfum_dex/screens/onboarding_screen.dart';
 import 'package:parfum_dex/screens/login_screen.dart';
