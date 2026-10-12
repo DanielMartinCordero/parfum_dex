@@ -63,7 +63,6 @@ class DefaultFirebaseOptions {
     projectId: 'parfumdex',
     storageBucket: 'parfumdex.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyA724gcOMB_BwGaDZvTZP3gH0HGmEvPkO0',
     appId: '1:328422734733:ios:337f3bd5ae2abe1cb59bc4',

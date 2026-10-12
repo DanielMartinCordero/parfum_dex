@@ -78,7 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         );
         // Redirigimos a la pantalla inicial
-        Navigator.of(context).pushReplacementNamed('/');
+        Navigator.of(context).pushReplacementNamed('/'); //Pendiente de implementar Home
       }
     }
   }
@@ -100,7 +100,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const Icon(Icons.lock_person, size: 80, color: Colors.deepPurple),
                     const SizedBox(height: 24),
                     TextFormField(controller: _emailController, decoration: const InputDecoration(
-                        labelText: "Correo electrónico",  prefixIcon: Icon(Icons.email), border: OutlineInputBorder()),
+                        labelText: "Correo electrónico",  prefixIcon: Icon(Icons.email), border: OutlineInputBorder(), errorMaxLines: 3),
                         validator: Validators.validateEmail,
                     ),
 
