@@ -1,7 +1,5 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:parfum_dex/services/database_seeder.dart';
 
+import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
 
