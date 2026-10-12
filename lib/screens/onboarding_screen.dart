@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parfum_dex/services/preferences_service.dart';
+import 'package:parfum_dex/services/database_seeder.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -39,7 +40,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: const Text('Saltar'),
               ),
             ),
-            
+            // Botón provisional para ejecutar el Seeder de la Base de Datos
+            TextButton.icon(
+              onPressed: () async {
+                try {
+                  await DatabaseSeeder.insertPerfumes();
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('¡Perfumes insertados con éxito en Firestore!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al insertar perfumes: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.cloud_upload),
+              label: const Text('Cargar Perfumes Seeder'),
+            ),
             // Carrusel de páginas
             Expanded(
               child: PageView(
