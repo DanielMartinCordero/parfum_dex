@@ -78,7 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         );
         // Redirigimos a la pantalla inicial
-        Navigator.of(context).pushReplacementNamed('/'); //Pendiente de implementar Home
+        Navigator.of(context).pushReplacementNamed('/home');
       }
     }
   }

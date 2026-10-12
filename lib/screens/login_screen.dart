@@ -48,7 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pushReplacementNamed('/'); //Pendiente de implementar Home
+        Navigator.of(context).pushReplacementNamed('/home');
       }
     }
   }
