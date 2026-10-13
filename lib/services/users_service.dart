@@ -4,15 +4,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_profile.dart';
 import 'package:flutter/foundation.dart'; // Para debugPrint
 
-class FirestoreService {
+class UsersService {
   // 1. Instancia única de Firestore
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // 2. Referencia TIPADA a la colección de usuarios (Requisito de tu rúbrica)
+  // 2. Referencia TIPADA a la colección de usuarios
   late final CollectionReference<UserProfile> _usersRef;
 
   // 3. Constructor
-  FirestoreService() {
+  UsersService() {
     _usersRef = _db.collection('users').withConverter<UserProfile>(
           fromFirestore: UserProfile.fromFirestore,
           toFirestore: (UserProfile profile, _) => profile.toFirestore(),

@@ -1,13 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart'; // Para usar debugPrint
-import 'firestore_service.dart';
+import 'users_service.dart';
 
 class AuthService {
   // 1. Instancia privada de FirebaseAuth
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Instancia de nuestro servicio de base de datos
-  final FirestoreService _firestoreService = FirestoreService();
+  final UsersService _firestoreService = UsersService();
 
   // 2. Stream para escuchar si hay usuario logueado o no
   Stream<User?> get authStateChanges => _auth.authStateChanges();
