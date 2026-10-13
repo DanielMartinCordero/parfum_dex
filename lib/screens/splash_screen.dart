@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/preferences_service.dart';
-// import 'package:firebase_auth/firebase_auth.dart'; // Lo usaremos en el futuro
+import 'package:firebase_auth/firebase_auth.dart'; // Lo usaremos en el futuro
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -17,24 +17,28 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkInitialRouting() async {
-    // 1. Esperamos 2 segundos para que el usuario vea el logo
-    await Future.delayed(const Duration(seconds: 2));
+    // 1. Esperamos 1 segundos para que el usuario vea el logo (fake delay)
+    await Future.delayed(const Duration(seconds: 1));
 
     // 2. Verificamos que el widget siga en pantalla antes de cambiar de ruta
     if (!mounted) return;
 
-    // 3. Leemos de las preferencias (nuestro servicio) si el usuario es nuevo
+    // 3. Leemos de las preferencias si la app se abre por primera vez
     final isFirstTime = PreferencesService.isFirstTime;
     
-    // final user = FirebaseAuth.instance.currentUser; // Lo usaremos en el futuro
+    // 4. Verificamos si hay una sesión activa de Firebase
+    final user = FirebaseAuth.instance.currentUser; 
 
-    // 4. Lógica de enrutamiento
+    // 5. Lógica de enrutamiento
     if (isFirstTime) {
-      // Si es la primera vez, vamos al Onboarding
+      // Caso 1: Nunca ha usado la app -> Onboarding
       Navigator.of(context).pushReplacementNamed('/onboarding');
+    } else if (user != null) {
+      // Caso 2: Ya usó la app y ya está logueado -> Pantalla Principal (Vault)
+      // Nota: Cambia '/home' por la ruta real de tu BottomNavigationBar cuando la crees
+      Navigator.of(context).pushReplacementNamed('/home'); 
     } else {
-      // Como aún no tenemos Firebase Auth conectado, por ahora 
-      // enviaremos a Login si no es la primera vez.
+      // Caso 3: Ya usó la app, pero no ha iniciado sesión (o cerró sesión) -> Login
       Navigator.of(context).pushReplacementNamed('/login');
     }
   }
@@ -46,7 +50,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Requerimiento Bloque 2: Manejo de imagen de red con fallback local
+            // Manejo de imagen de red con fallback local
             Image.network(
               'https://picsum.photos/200', // Imagen placeholder (temporal)
               width: 150,
