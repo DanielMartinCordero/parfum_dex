@@ -1,7 +1,9 @@
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
+import '../routes/app_routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -55,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pushReplacementNamed('/home');
+        context.go('/explore');
       }
     }
   }
@@ -116,8 +118,8 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 12.0),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pushNamed('/register');
-              },
+                context.go('/register');
+                },
               child: const Text('¿No tienes cuenta? Regístrate aquí'),
             ),
           ],
