@@ -1,20 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:material_symbols_icons/symbols.dart';
+import 'package:go_router/go_router.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatelessWidget {
+  //Encargado de controlar las pantallas principales del BottomNavigationBar
+  final StatefulNavigationShell navigationShell;
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0;
+  const HomeScreen({super.key, required this.navigationShell});
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("ParfumDex"), centerTitle: true),
-      body: const Center(child: Icon(Symbols.fragrance, size: 100)),
-
+      body: navigationShell,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: navigationShell.currentIndex,
+        onTap: (index) => navigationShell.goBranch(
+          index,
+          initialLocation: index == navigationShell.currentIndex,
+        ),
+        items: const[
+          BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Catálogo'),
+          BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: 'Armario'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil')
+        ],
+      ),
     );
   }
 
