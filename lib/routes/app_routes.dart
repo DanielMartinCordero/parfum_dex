@@ -1,15 +1,16 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:parfum_dex/screens/explore_screen.dart';
+import '../screens/profile_screen.dart';
 import '../screens/splash_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
 import '../screens/home_screen.dart';
+import '../screens/vault_screen.dart';
 
 class AppRoutes {
 
-  final GoRouter appRouter = GoRouter(
+  static final GoRouter appRouter = GoRouter(
     initialLocation: '/',
     routes: [
       GoRoute(
@@ -36,8 +37,8 @@ class AppRoutes {
             StatefulShellBranch(
               routes: [
                 GoRoute(
-                  path: '/search_engine',
-                  builder: (context, state) => const HomeScreen(), //Pendiente de implementar el buscador
+                  path: '/explore',
+                  builder: (context, state) => const ExploreScreen(), //Pendiente de implementar el buscador
                 ),
               ]
             ),
@@ -45,7 +46,7 @@ class AppRoutes {
               routes: [
                 GoRoute(
                   path: '/vault',
-                  builder: (context, state) => const HomeScreen(), //Pendiente de implementar el armario
+                  builder: (context, state) => const VaultScreen(), //Pendiente de implementar el armario
                 ),
                 ]
               ),
@@ -53,7 +54,7 @@ class AppRoutes {
               routes: [
                 GoRoute(
                  path: '/profile',
-                  builder: (context, state) => const HomeScreen(), //Pendiente de implementar el perfil
+                  builder: (context, state) => const ProfileScreen(), //Pendiente de implementar el perfil
                 )
               ]
             )
