@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../services/preferences_service.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // Lo usaremos en el futuro
 
@@ -32,14 +33,14 @@ class _SplashScreenState extends State<SplashScreen> {
     // 5. Lógica de enrutamiento
     if (isFirstTime) {
       // Caso 1: Nunca ha usado la app -> Onboarding
-      Navigator.of(context).pushReplacementNamed('/onboarding');
+      context.go('/onboarding');
     } else if (user != null) {
       // Caso 2: Ya usó la app y ya está logueado -> Pantalla Principal (Vault)
       // Nota: Cambia '/home' por la ruta real de tu BottomNavigationBar cuando la crees
-      Navigator.of(context).pushReplacementNamed('/home'); 
+      context.go('/explore');
     } else {
       // Caso 3: Ya usó la app, pero no ha iniciado sesión (o cerró sesión) -> Login
-      Navigator.of(context).pushReplacementNamed('/login');
+      context.go('/login');
     }
   }
 

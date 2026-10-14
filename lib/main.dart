@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; // <--- IMPORTANTE
-import 'package:parfum_dex/screens/home_screen.dart';
-import 'firebase_options.dart'; // <--- IMPORTANTE (Asegúrate de que este archivo existe)
-import 'package:parfum_dex/screens/register_screen.dart';
-import 'package:parfum_dex/screens/splash_screen.dart';
+import 'routes/app_routes.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'package:parfum_dex/services/preferences_service.dart';
-import 'package:parfum_dex/screens/onboarding_screen.dart';
-import 'package:parfum_dex/screens/login_screen.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,9 +22,10 @@ class ParfumDexApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'ParfumDex',
       debugShowCheckedModeBanner: false, // Quita la banda roja de "DEBUG"
+      routerConfig: AppRoutes.appRouter,
       theme: ThemeData(
         // Genera la paleta de colores a partir de un morado intenso (deepPurple)
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -51,15 +49,6 @@ class ParfumDexApp extends StatelessWidget {
           ),
         ),
       ),
-      // La Splash Screen es nuestra ruta inicial
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/onboarding': (context) => const OnboardingScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/register': (context) => const RegisterScreen(),
-        '/home': (context) => const HomeScreen(),
-      },
     );
   }
 }

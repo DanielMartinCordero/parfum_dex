@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:parfum_dex/services/preferences_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -16,7 +17,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _completeOnboarding() async {
     await PreferencesService.setNotFirstTime();
     if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/login');
+      context.go('/login');
   }
 
   @override
