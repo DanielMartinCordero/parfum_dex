@@ -28,10 +28,38 @@ class AppRoutes {
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
       ),
-      GoRoute(
-        path: '/home',
-        builder: (context, state) => const HomeScreen(),
+      StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell){
+            return HomeScreen(navigationShell: navigationShell);
+          },
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/search_engine',
+                  builder: (context, state) => const HomeScreen(), //Pendiente de implementar el buscador
+                ),
+              ]
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/vault',
+                  builder: (context, state) => const HomeScreen(), //Pendiente de implementar el armario
+                ),
+                ]
+              ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                 path: '/profile',
+                  builder: (context, state) => const HomeScreen(), //Pendiente de implementar el perfil
+                )
+              ]
+            )
+          ]
       ),
     ],
+
   );
 }
