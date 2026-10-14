@@ -5,7 +5,7 @@ import '../screens/splash_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
-import '../screens/home_screen.dart';
+import '../screens/home_shell.dart';
 import '../screens/vault_screen.dart';
 
 class AppRoutes {
@@ -31,7 +31,7 @@ class AppRoutes {
       ),
       StatefulShellRoute.indexedStack(
           builder: (context, state, navigationShell){
-            return HomeScreen(navigationShell: navigationShell);
+            return HomeShell(navigationShell: navigationShell);
           },
           branches: [
             StatefulShellBranch(

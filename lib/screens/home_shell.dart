@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeShell extends StatelessWidget {
   //Encargado de controlar las pantallas principales del BottomNavigationBar
   final StatefulNavigationShell navigationShell;
 
-  const HomeScreen({super.key, required this.navigationShell});
+  const HomeShell({super.key, required this.navigationShell});
 
 
   @override
