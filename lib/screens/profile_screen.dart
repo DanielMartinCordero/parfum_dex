@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import '../services/auth_service.dart';
 
@@ -21,11 +22,10 @@ class ProfileScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () async {
               await AuthService().signOut();
-              // Nota: Como estamos probando rutas aisladas, no he metido el context.go('/login')
-              // para no romper tus pruebas actuales si no has importado go_router.
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Sesión cerrada')),
               );
+              context.go('/login');
             },
             child: const Text('Cerrar sesión'),
           )
