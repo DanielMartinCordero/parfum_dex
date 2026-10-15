@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:parfum_dex/routes/app_routes.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
 
@@ -56,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        context.go('/explore');
+        context.go(AppRoutes.explore);
       }
     }
   }
@@ -117,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 12.0),
             TextButton(
               onPressed: () {
-                context.go('/register');
+                context.go(AppRoutes.register);
                 },
               child: const Text('¿No tienes cuenta? Regístrate aquí'),
             ),

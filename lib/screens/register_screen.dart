@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../routes/app_routes.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
 
@@ -140,7 +141,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 4),
                     TextButton(
                       onPressed: () {
-                        context.go('/login');
+                        context.go(AppRoutes.login);
                     },
                       child: Text("Ya tengo una cuenta")
                     ),

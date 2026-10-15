@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:parfum_dex/routes/app_routes.dart';
 import '../services/auth_service.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -25,7 +26,7 @@ class ProfileScreen extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Sesión cerrada')),
               );
-              context.go('/login');
+              context.go(AppRoutes.login);
             },
             child: const Text('Cerrar sesión'),
           )

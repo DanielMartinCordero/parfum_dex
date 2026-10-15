@@ -17,7 +17,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _completeOnboarding() async {
     await PreferencesService.setNotFirstTime();
     if (!mounted) return;
-      context.go('/login');
+      context.go(AppRoutes.login);
   }
 
   @override
