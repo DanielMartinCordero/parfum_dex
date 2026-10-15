@@ -7,7 +7,7 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Instancia de nuestro servicio de base de datos
-  final UsersService _firestoreService = UsersService();
+  final UsersService _usersService = UsersService();
 
   // 2. Stream para escuchar si hay usuario logueado o no
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -18,13 +18,13 @@ class AuthService {
   // 4. Método para REGISTRAR con email y contraseña
   Future<String?> registerWithEmail(String email, String password, String displayName) async {
     try {
-      // A) VALIDACIÓN: ¿Está libre el nombre de usuario?
-      bool isAvailable = await _firestoreService.isUsernameAvailable(displayName);
+      // VALIDACIÓN: ¿Está libre el nombre de usuario?
+      bool isAvailable = await _usersService.isUsernameAvailable(displayName);
       if (!isAvailable) {
         return 'El nombre de usuario "$displayName" ya está en uso. Por favor, elige otro.';
       }
 
-      // B) CREACIÓN EN FIREBASE AUTH
+      // CREACIÓN EN FIREBASE AUTH
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
           email: email,
           password: password
@@ -33,11 +33,11 @@ class AuthService {
       final user = userCredential.user;
 
       if (user != null) {
-        // C) Actualizamos el perfil básico de Auth
+        //Actualizamos el perfil básico de Auth
         await user.updateDisplayName(displayName);
 
-        // D) CREACIÓN EN FIRESTORE (El documento completo del perfil)
-        await _firestoreService.createUserProfile(
+        // CREACIÓN EN FIRESTORE (El documento completo del perfil)
+        await _usersService.createUserProfile(
           uid: user.uid,
           email: email,
           displayName: displayName,
@@ -47,7 +47,7 @@ class AuthService {
       return null; // Registro completo y perfecto
 
     } on FirebaseAuthException catch (e) {
-      // ¡Aquí cumplimos el requisito de capturar errores específicos!
+      // Capturamos los errores
       debugPrint('Error de Firebase Auth (Registro): ${e.code}');
 
       if (e.code == 'weak-password') {
