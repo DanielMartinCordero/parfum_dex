@@ -16,7 +16,7 @@ class PerfumesService {
     );
   }
 
-  Future<List<Perfume>> getPerfume({int limit = 50}) async {
+  Future<List<Perfume>> getPerfumes({int limit = 50}) async {
     try {
       final querySnapshot = await _perfumesRef.limit(limit).get();
 
