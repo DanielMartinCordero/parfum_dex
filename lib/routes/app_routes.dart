@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parfum_dex/screens/explore_screen.dart';
+
 import '../screens/profile_screen.dart';
 import '../screens/splash_screen.dart';
 import '../screens/onboarding_screen.dart';
@@ -21,7 +22,6 @@ class AppRoutes {
   static const String profile = '/profile';
 
   static final GoRouter appRouter = GoRouter(
-
     initialLocation: splash,
     // 2. GUARDIA DE NAVEGACIÓN GLOBAL (Route Guard)
     redirect: (context, state) {
@@ -49,52 +49,48 @@ class AppRoutes {
     },
 
     routes: [
-      GoRoute(
-        path: splash,
-        builder: (context, state) => const SplashScreen(),
-      ),
+      GoRoute(path: splash, builder: (context, state) => const SplashScreen()),
       GoRoute(
         path: onboarding,
         builder: (context, state) => const OnboardingScreen(),
       ),
-      GoRoute(
-        path: login,
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: login, builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: register,
         builder: (context, state) => const RegisterScreen(),
       ),
       StatefulShellRoute.indexedStack(
-          builder: (context, state, navigationShell){
-            return HomeShell(navigationShell: navigationShell);
-          },
-          branches: [
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
-                  path: explore,
-                  builder: (context, state) => const ExploreScreen(),
-                  routes: [
-                    GoRoute(
-                      path: 'detail',
-                      builder: (context, state) {
-                        final perfume = state.extra as Perfume; //Le mandamos el perfume a la details que necesita mostrarlo
-                        return PerfumeDetailScreen(perfume: perfume);
-                      },
-                    ),
-                  ]
-                ),
-              ]
-            ),
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
-                  path: vault,
-                  builder: (context, state) => const VaultScreen(), //Pendiente de implementar el armario
-                ),
-                ]
+        builder: (context, state, navigationShell) {
+          return HomeShell(navigationShell: navigationShell);
+        },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: explore,
+                builder: (context, state) => const ExploreScreen(),
+                routes: [
+                  GoRoute(
+                    // Usamos un parámetro de ruta dinámico: :id
+                    path: 'detail/:id',
+                    builder: (context, state) {
+                      // 1. Extraemos el ID directamente de la URL
+                      final String perfumeId = state.pathParameters['id']!;
+
+                      // 2. Extraemos el objeto entero de la memoria (puede ser nulo si pulsan F5)
+                      final perfume = state.extra as Perfume?;
+
+                      // Pasamos ambos datos a la pantalla
+                      return PerfumeDetailScreen(
+                        perfumeId: perfumeId,
+                        initialPerfume: perfume,
+                      );
+                    },
+                  ),
+                ],
               ),
+            ]
+          ),
             StatefulShellBranch(
               routes: [
                 GoRoute(
@@ -106,6 +102,5 @@ class AppRoutes {
           ]
       ),
     ],
-
   );
 }

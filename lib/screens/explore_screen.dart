@@ -25,6 +25,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   void initState() {
     super.initState();
     _perfumesFuture = _perfumesService.getPerfumes();
+    print("-------------Perfumes obtenidos para mostrar en catálogo-------------");
     _searchFocusNode.addListener(() {
       setState(() {
         _isFocused = _searchFocusNode.hasFocus;
@@ -57,97 +58,109 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       // Añadimos el AppBar
-      appBar: AppBar(
-        title: const Text("ParfumDex"),
-      ),
+      appBar: AppBar(title: const Text("ParfumDex")),
       body: GestureDetector(
         onTap: () => _searchFocusNode.unfocus(),
         behavior: HitTestBehavior.opaque,
         child: Column(
-        children: [
-          SearchBarWidget(
-            controller: _searchController,
-            focusNode: _searchFocusNode,
-            isFocused: _isFocused,
-            searchQuery: _searchQuery,
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value.toLowerCase().trim();
-              });
-            },
-            onClear: _clearSearch,
-          ),
-          Expanded(
-            child: FutureBuilder<List<Perfume>>(
-              future: _perfumesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.error_outline,
-                            size: 60, color: Colors.red),
-                        const SizedBox(height: 12),
-                        const Text('Error al cargar los perfumes.'),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: _reloadPerfumes,
-                          child: const Text('Reintentar'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                final allPerfumes = snapshot.data ?? [];
-                final filteredPerfumes = _searchQuery.isEmpty
-                    ? allPerfumes
-                    : allPerfumes.where((perfume) {
-                        final matchesName =
-                            perfume.name.toLowerCase().contains(_searchQuery);
-                        final matchesBrand =
-                            perfume.brand.toLowerCase().contains(_searchQuery);
-                        final matchesNotes = perfume.notes.values.any((list) =>
-                            list.any((note) =>
-                                note.toLowerCase().contains(_searchQuery)));
-                        return matchesName || matchesBrand || matchesNotes;
-                      }).toList();
-
-                if (filteredPerfumes.isEmpty) {
-                  return Center(
-                    child: Text(
-                      _searchQuery.isEmpty
-                          ? 'No hay perfumes en el catálogo.'
-                          : 'No se encontraron resultados para "$_searchQuery".',
-                      style: const TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                  );
-                }
-
-                return GridView.builder(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 140, 
-                    mainAxisExtent: 200,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                  ),
-                  itemCount: filteredPerfumes.length,
-                  itemBuilder: (context, index) {
-                    final perfume = filteredPerfumes[index];
-                    return PerfumeCard(perfume: perfume);
-                  },
-                );
+          children: [
+            SearchBarWidget(
+              controller: _searchController,
+              focusNode: _searchFocusNode,
+              isFocused: _isFocused,
+              searchQuery: _searchQuery,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase().trim();
+                });
               },
+              onClear: _clearSearch,
             ),
-          ),
-        ],
-      ),
+            Expanded(
+              child: FutureBuilder<List<Perfume>>(
+                future: _perfumesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 60,
+                            color: Colors.red,
+                          ),
+                          const SizedBox(height: 12),
+                          const Text('Error al cargar los perfumes.'),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: _reloadPerfumes,
+                            child: const Text('Reintentar'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final allPerfumes = snapshot.data ?? [];
+                  final filteredPerfumes = _searchQuery.isEmpty
+                      ? allPerfumes
+                      : allPerfumes.where((perfume) {
+                          final matchesName = perfume.name
+                              .toLowerCase()
+                              .contains(_searchQuery);
+                          final matchesBrand = perfume.brand
+                              .toLowerCase()
+                              .contains(_searchQuery);
+                          final matchesNotes = perfume.notes.values.any(
+                            (list) => list.any(
+                              (note) =>
+                                  note.toLowerCase().contains(_searchQuery),
+                            ),
+                          );
+                          return matchesName || matchesBrand || matchesNotes;
+                        }).toList();
+
+                  if (filteredPerfumes.isEmpty) {
+                    return Center(
+                      child: Text(
+                        _searchQuery.isEmpty
+                            ? 'No hay perfumes en el catálogo.'
+                            : 'No se encontraron resultados para "$_searchQuery".',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    );
+                  }
+
+                  return GridView.builder(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 140,
+                          mainAxisExtent: 200,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                        ),
+                    itemCount: filteredPerfumes.length,
+                    itemBuilder: (context, index) {
+                      final perfume = filteredPerfumes[index];
+                      return PerfumeCard(perfume: perfume);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
