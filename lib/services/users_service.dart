@@ -1,7 +1,7 @@
-
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../models/user_profile.dart';
+
 import 'package:flutter/foundation.dart'; // Para debugPrint
 
 class UsersService {
@@ -13,7 +13,9 @@ class UsersService {
 
   // 3. Constructor
   UsersService() {
-    _usersRef = _db.collection('users').withConverter<UserProfile>(
+    _usersRef = _db
+        .collection('users')
+        .withConverter<UserProfile>(
           fromFirestore: UserProfile.fromFirestore,
           toFirestore: (UserProfile profile, _) => profile.toFirestore(),
         );
@@ -36,7 +38,7 @@ class UsersService {
 
       // Guardamos en Firestore usando la referencia tipada
       await _usersRef.doc(uid).set(newUserProfile);
-      
+
       debugPrint("Perfil de usuario creado en Firestore con éxito.");
     } catch (e) {
       debugPrint("Error creando el perfil en Firestore: $e");
@@ -60,7 +62,7 @@ class UsersService {
     } catch (e) {
       debugPrint("Error comprobando disponibilidad del username: $e");
       // Por seguridad, si falla la base de datos, decimos que no está disponible
-      return false; 
+      return false;
     }
   }
 }

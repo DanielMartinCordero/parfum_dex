@@ -1,28 +1,28 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../routes/app_routes.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
 
 class RegisterScreen extends StatefulWidget {
-const RegisterScreen ({super.key});
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
-
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   final TextEditingController _displayName = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   // 1. Instanciamos el servicio de autenticación
   final AuthService _authService = AuthService();
-  
+
   // 2. Variable para controlar el estado de carga (el circulito dando vueltas)
   bool _isLoading = false;
 
@@ -39,7 +39,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _handleRegister() async {
     // Primero, validamos con nuestros Validadores (Capa Cliente)
     if (_formKey.currentState!.validate()) {
-      
       //Ponemos el estado de carga en true para mostrar el spinner
       setState(() {
         _isLoading = true;
@@ -52,7 +51,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       // Llamamos al servicio (Capa Servidor/Infraestructura)
       // Como devuelve un Future, usamos 'await' para esperar la respuesta.
-      final errorMessage = await _authService.registerWithEmail(email, password, name);
+      final errorMessage = await _authService.registerWithEmail(
+        email,
+        password,
+        name,
+      );
 
       //Como la función era asíncrona (await), comprobamos que la pantalla siga existiendo
       if (!mounted) return;
@@ -68,7 +71,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
-            backgroundColor: Colors.red, // Ponemos el fondo rojo para indicar error
+            backgroundColor:
+                Colors.red, // Ponemos el fondo rojo para indicar error
           ),
         );
       } else {
@@ -88,68 +92,98 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar( title: const Text("Registro"), centerTitle: true),
-        body:
-            SingleChildScrollView( //Necesario para que el usuario pueda scrollear
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Form(
-                key: _formKey,
-                child: Column (
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Icon(Icons.lock_person, size: 80, color: Colors.deepPurple),
-                    const SizedBox(height: 24),
-                    TextFormField(controller: _emailController, decoration: const InputDecoration(
-                        labelText: "Correo electrónico",  prefixIcon: Icon(Icons.email), border: OutlineInputBorder(), errorMaxLines: 3),
-                        validator: Validators.validateEmail,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    TextFormField(controller: _displayName, decoration: const InputDecoration(
-                        labelText: "Nombre de usuario (el nombre que se verá en la aplicación)", prefixIcon: Icon(Icons.person), border: OutlineInputBorder()),
-                        validator: Validators.validateName,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    TextFormField(controller: _passwordController, decoration: const InputDecoration(
-                        labelText: "Contraseña", prefixIcon: Icon(Icons.lock), border: OutlineInputBorder()), obscureText: true,
-                        validator: Validators.validatePassword,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    TextFormField(controller: _confirmPasswordController, decoration: const InputDecoration(
-                        labelText: "Confirmar contraseña", prefixIcon: Icon(Icons.lock), border: OutlineInputBorder()), obscureText: true,
-                      validator: (value) => Validators.validateConfirmPassword(value, _passwordController.text),
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // 4. Mostramos el botón de registro O el indicador de carga
-                    _isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : ElevatedButton(
-                            // 5. Conectamos el botón con nuestra función
-                            onPressed: _handleRegister,
-                            child: const Text("Registrarse")
-                          ),
-
-                    const SizedBox(height: 4),
-                    TextButton(
-                      onPressed: () {
-                        context.go(AppRoutes.login);
-                    },
-                      child: Text("Ya tengo una cuenta")
-                    ),
-                  ],
+      appBar: AppBar(title: const Text("Registro"), centerTitle: true),
+      body: SingleChildScrollView(
+        //Necesario para que el usuario pueda scrollear
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Icon(
+                  Icons.lock_person,
+                  size: 80,
+                  color: Colors.deepPurple,
+                ),
+                const SizedBox(height: 24),
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    labelText: "Correo electrónico",
+                    prefixIcon: Icon(Icons.email),
+                    border: OutlineInputBorder(),
+                    errorMaxLines: 3,
                   ),
-              ),
-          ),
+                  validator: Validators.validateEmail,
+                ),
+
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _displayName,
+                  decoration: const InputDecoration(
+                    labelText: "Nombre de usuario (el nombre que se verá en la aplicación)",
+                    prefixIcon: Icon(Icons.person),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: Validators.validateName,
+                ),
+
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: const InputDecoration(
+                    labelText: "Contraseña",
+                    prefixIcon: Icon(Icons.lock),
+                    border: OutlineInputBorder(),
+                  ),
+                  obscureText: true,
+                  validator: Validators.validatePassword,
+                ),
+
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  decoration: const InputDecoration(
+                    labelText: "Confirmar contraseña",
+                    prefixIcon: Icon(Icons.lock),
+                    border: OutlineInputBorder(),
+                  ),
+                  obscureText: true,
+                  validator: (value) => Validators.validateConfirmPassword(
+                    value,
+                    _passwordController.text,
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // 4. Mostramos el botón de registro O el indicador de carga
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ElevatedButton(
+                        // 5. Conectamos el botón con nuestra función
+                        onPressed: _handleRegister,
+                        child: const Text("Registrarse"),
+                      ),
+
+                const SizedBox(height: 4),
+                TextButton(
+                  onPressed: () {
+                    context.go(AppRoutes.login);
+                  },
+                  child: Text("Ya tengo una cuenta"),
+                ),
+              ],
             ),
-      );
+          ),
+        ),
+      ),
+    );
   }
 }

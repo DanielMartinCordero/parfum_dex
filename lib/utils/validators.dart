@@ -38,7 +38,10 @@ class Validators {
   }
 
   /// Valida que la contraseña de confirmación sea idéntica a la original.
-  static String? validateConfirmPassword(String? value, String originalPassword) {
+  static String? validateConfirmPassword(
+    String? value,
+    String originalPassword,
+  ) {
     if (value == null || value.isEmpty) {
       return 'Confirma tu contraseña';
     }

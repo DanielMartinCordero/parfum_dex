@@ -7,7 +7,6 @@ class HomeShell extends StatelessWidget {
 
   const HomeShell({super.key, required this.navigationShell});
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,13 +17,15 @@ class HomeShell extends StatelessWidget {
           index,
           initialLocation: index == navigationShell.currentIndex,
         ),
-        items: const[
+        items: const [
           BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Catálogo'),
-          BottomNavigationBarItem(icon: Icon(Icons.inventory_2), label: 'Armario'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil')
+          BottomNavigationBarItem(
+            icon: Icon(Icons.inventory_2),
+            label: 'Armario',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
         ],
       ),
     );
   }
-
-  }
+}

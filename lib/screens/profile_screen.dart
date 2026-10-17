@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:parfum_dex/routes/app_routes.dart';
+
 import '../services/auth_service.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -10,9 +11,7 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("ParfumDex"),
-      ),
+      appBar: AppBar(title: const Text("ParfumDex")),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -28,13 +27,13 @@ class ProfileScreen extends StatelessWidget {
               onPressed: () async {
                 await AuthService().signOut();
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Sesión cerrada')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Sesión cerrada')));
                 context.go(AppRoutes.login);
               },
               child: const Text('Cerrar sesión'),
-            )
+            ),
           ],
         ),
       ),

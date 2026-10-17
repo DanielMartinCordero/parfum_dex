@@ -64,39 +64,43 @@ class Perfume {
     return inStockOffers.first;
   }
 
-  factory Perfume.fromFirestore(DocumentSnapshot<Map<String, dynamic>> snapshot,
-      SnapshotOptions? options,) {
+  factory Perfume.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
     final data = snapshot.data();
-    if (data == null) { //No existe ese id en la base de datos
+    if (data == null) {
+      //No existe ese id en la base de datos
       debugPrint(
-          'Error crítico: Documento de Perfume vacío (ID: ${snapshot.id})');
+        'Error crítico: Documento de Perfume vacío (ID: ${snapshot.id})',
+      );
       throw Exception('El documento Firestore no contiene datos.');
     }
 
-  //Revisión previa de que los datos recibidos son los esperados
-  Map<String, List<String>> parsedNotes = {};
+    //Revisión previa de que los datos recibidos son los esperados
+    Map<String, List<String>> parsedNotes = {};
 
-  if (data['notes'] is Map) {
-  final Map<dynamic, dynamic> rawNotes = data['notes'];
-  rawNotes.forEach((key, value) {
-  if (key is String && value is List) {
-  parsedNotes[key] = List<String>.from(value);
-  }
-  });
-  }
+    if (data['notes'] is Map) {
+      final Map<dynamic, dynamic> rawNotes = data['notes'];
+      rawNotes.forEach((key, value) {
+        if (key is String && value is List) {
+          parsedNotes[key] = List<String>.from(value);
+        }
+      });
+    }
 
-  List<String> parsedSeasons = [];
-  if (data['season'] is List) {
-  parsedSeasons = List<String>.from(data['season']);
-  }
+    List<String> parsedSeasons = [];
+    if (data['season'] is List) {
+      parsedSeasons = List<String>.from(data['season']);
+    }
 
-  List<RetailOffer> parsedPrices = [];
-  if (data['prices'] is List) {
-  parsedPrices = (data['prices'] as List)
-      .whereType<Map<String, dynamic>>()
-      .map((e) => RetailOffer.fromMap(e))
-      .toList();
-  }
+    List<RetailOffer> parsedPrices = [];
+    if (data['prices'] is List) {
+      parsedPrices = (data['prices'] as List)
+          .whereType<Map<String, dynamic>>()
+          .map((e) => RetailOffer.fromMap(e))
+          .toList();
+    }
     return Perfume(
       id: snapshot.id,
       brand: data['brand'] as String? ?? 'Desconocida',
@@ -109,7 +113,7 @@ class Perfume {
       tareInfo: TareInfo.fromMap(data['tareInfo'] as Map<String, dynamic>?),
       prices: parsedPrices,
     );
-}
+  }
   Map<String, dynamic> toFirestore() {
     return {
       'brand': brand,

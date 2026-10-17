@@ -1,7 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:parfum_dex/routes/app_routes.dart';
+
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
 
@@ -25,8 +25,8 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async{
-    if(_formKey.currentState!.validate()){
+  Future<void> _handleLogin() async {
+    if (_formKey.currentState!.validate()) {
       setState(() {
         _loadingIcon = true;
       });
@@ -42,15 +42,15 @@ class _LoginScreenState extends State<LoginScreen> {
         _loadingIcon = false;
       });
 
-      if(errorMessage != null){
+      if (errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
-            backgroundColor: Colors.red, // Ponemos el fondo rojo para indicar error
+            backgroundColor:
+                Colors.red, // Ponemos el fondo rojo para indicar error
           ),
         );
-      }
-      else{
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("Sesión iniciada con éxito"),
@@ -62,70 +62,72 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Iniciar Sesión'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Iniciar Sesión'), centerTitle: true),
       body: SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        // Envolvemos la columna en un Form y le pasamos nuestra key
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-            const Icon(Icons.lock_person, size: 80, color: Colors.deepPurple),
-            const SizedBox(height: 40),
-            TextFormField(
-              validator: Validators.validateEmail,
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'Correo electrónico',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email),
-                errorMaxLines: 3,
-              ),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              validator: Validators.validatePassword,
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Contraseña',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lock),
-              ),
-            ),
-            const SizedBox(height: 24),
-            _loadingIcon ?
-              const Center(child: CircularProgressIndicator()) 
-                :
-                ElevatedButton(
-                  // Pasamos la referencia de la función directamente
-                  onPressed: _handleLogin,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text('Ingresar', style: TextStyle(fontSize: 16)),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          // Envolvemos la columna en un Form y le pasamos nuestra key
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Icon(
+                  Icons.lock_person,
+                  size: 80,
+                  color: Colors.deepPurple,
                 ),
-            const SizedBox(height: 12.0),
-            TextButton(
-              onPressed: () {
-                context.go(AppRoutes.register);
-                },
-              child: const Text('¿No tienes cuenta? Regístrate aquí'),
+                const SizedBox(height: 40),
+                TextFormField(
+                  validator: Validators.validateEmail,
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    labelText: 'Correo electrónico',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.email),
+                    errorMaxLines: 3,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  validator: Validators.validatePassword,
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Contraseña',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.lock),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _loadingIcon
+                    ? const Center(child: CircularProgressIndicator())
+                    : ElevatedButton(
+                        // Pasamos la referencia de la función directamente
+                        onPressed: _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Text(
+                          'Ingresar',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                const SizedBox(height: 12.0),
+                TextButton(
+                  onPressed: () {
+                    context.go(AppRoutes.register);
+                  },
+                  child: const Text('¿No tienes cuenta? Regístrate aquí'),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
-      ),
       ),
     );
   }

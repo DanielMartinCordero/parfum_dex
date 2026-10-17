@@ -10,7 +10,6 @@ class UserProfile {
   final int? birthYear;
   final String? scentPreference;
 
-
   const UserProfile({
     required this.uid,
     required this.email,
@@ -19,14 +18,14 @@ class UserProfile {
     required this.createdAt,
     this.genre,
     this.birthYear,
-    this.scentPreference
+    this.scentPreference,
   });
 
   // Deserialización tipada para Cloud Firestore
   factory UserProfile.fromFirestore(
-      DocumentSnapshot<Map<String, dynamic>> snapshot,
-      SnapshotOptions? options,
-      ) {
+    DocumentSnapshot<Map<String, dynamic>> snapshot,
+    SnapshotOptions? options,
+  ) {
     final data = snapshot.data();
     if (data == null) {
       throw Exception('El documento de perfil de usuario no contiene datos.');

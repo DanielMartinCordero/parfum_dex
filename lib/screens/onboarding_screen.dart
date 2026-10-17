@@ -19,7 +19,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _completeOnboarding() async {
     await PreferencesService.setNotFirstTime();
     if (!mounted) return;
-      context.go(AppRoutes.login);
+    context.go(AppRoutes.login);
   }
 
   @override
@@ -87,9 +87,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         width: _currentPage == index ? 24 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: _currentPage == index 
-                            ? Theme.of(context).colorScheme.primary 
-                            : Colors.grey.shade300,
+                          color: _currentPage == index
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey.shade300,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -112,7 +112,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),

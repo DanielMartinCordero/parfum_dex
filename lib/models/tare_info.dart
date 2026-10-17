@@ -1,4 +1,4 @@
-class TareInfo{
+class TareInfo {
   final double emptyBottleWeight; //Peso en gramos del bote de perfume vacío
   final double liquidDensity;
 
@@ -7,7 +7,7 @@ class TareInfo{
     this.liquidDensity = 0.85, //Densidad estándar del líquido de los perfumes
   });
 
-  static TareInfo? fromMap(Map<String, dynamic>? map){
+  static TareInfo? fromMap(Map<String, dynamic>? map) {
     if (map == null) //Si el perfume no tiene registro de peso, devolvemos null
       return null;
     final bottleWeight = (map['emptyBottleWeight'] as num?)?.toDouble();
@@ -21,6 +21,7 @@ class TareInfo{
       liquidDensity: (map['liquidDensity'] as num?)?.toDouble() ?? 0.85,
     );
   }
+
   Map<String, dynamic> toMap() {
     return {
       'emptyBottleWeight': emptyBottleWeight,

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../routes/app_routes.dart';
 import '../services/preferences_service.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -27,9 +29,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // 3. Leemos de las preferencias si la app se abre por primera vez
     final isFirstTime = PreferencesService.isFirstTime;
-    
+
     // 4. Verificamos si hay una sesión activa de Firebase
-    final user = FirebaseAuth.instance.currentUser; 
+    final user = FirebaseAuth.instance.currentUser;
 
     // 5. Lógica de enrutamiento
     if (isFirstTime) {
@@ -73,7 +75,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 24),
             // Indicador de carga explícito
-            const CircularProgressIndicator(), 
+            const CircularProgressIndicator(),
           ],
         ),
       ),

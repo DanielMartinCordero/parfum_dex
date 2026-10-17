@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
-class VaultItem{
+class VaultItem {
   final String id;
   final String perfumeId;
   final String brand;
@@ -9,7 +9,8 @@ class VaultItem{
   final String imageUrl;
   final String itemType; //Bote o decant
   final int capacityMl;
-  final double? remainingMl; //Opcionales para no obligar al usuario a rellenarlos
+  final double?
+  remainingMl; //Opcionales para no obligar al usuario a rellenarlos
   final double? purchasePrice;
   final double? rating;
 
@@ -26,7 +27,7 @@ class VaultItem{
     this.rating,
   });
   double? get fillPercentage {
-    if(remainingMl == null){
+    if (remainingMl == null) {
       debugPrint('Error: El nivel de llenado no está definido.');
       return null;
     }
@@ -35,7 +36,7 @@ class VaultItem{
   }
 
   double? get costPerSpray {
-    if(purchasePrice == null){
+    if (purchasePrice == null) {
       debugPrint("Error: El precio de compra no está definido.");
       return null;
     }
@@ -48,27 +49,27 @@ class VaultItem{
   factory VaultItem.fromFirestore(
     DocumentSnapshot<Map<String, dynamic>> snapshot,
     SnapshotOptions? options,
-    ){
-      final data = snapshot.data();
-      if (data == null) {
-        throw Exception('El documento VaultItem no contiene datos.');
-      }
-
-      return VaultItem(
-        id: snapshot.id,
-        perfumeId: data['perfumeId'] as String? ?? '',
-        name: data['perfumeName'] as String? ?? 'Perfume sin nombre',
-        brand: data['brand'] as String? ?? 'Marca desconocida',
-        imageUrl: data['imageUrl'] as String? ?? '',
-        itemType: data['itemType'] as String? ?? 'bottle',
-        // Parseo defensivo num -> int para prevenir errores de tipo de Firestore
-        capacityMl: (data['capacityMl'] as num?)?.toInt() ?? 0,
-        //Comprobación por si viene null
-        remainingMl: (data['remainingMl'] as num?)?.toDouble(),
-        purchasePrice: (data['purchasePrice'] as num?)?.toDouble(),
-        rating: (data['rating'] as num?)?.toDouble(),
-      );
+  ) {
+    final data = snapshot.data();
+    if (data == null) {
+      throw Exception('El documento VaultItem no contiene datos.');
     }
+
+    return VaultItem(
+      id: snapshot.id,
+      perfumeId: data['perfumeId'] as String? ?? '',
+      name: data['perfumeName'] as String? ?? 'Perfume sin nombre',
+      brand: data['brand'] as String? ?? 'Marca desconocida',
+      imageUrl: data['imageUrl'] as String? ?? '',
+      itemType: data['itemType'] as String? ?? 'bottle',
+      // Parseo defensivo num -> int para prevenir errores de tipo de Firestore
+      capacityMl: (data['capacityMl'] as num?)?.toInt() ?? 0,
+      //Comprobación por si viene null
+      remainingMl: (data['remainingMl'] as num?)?.toDouble(),
+      purchasePrice: (data['purchasePrice'] as num?)?.toDouble(),
+      rating: (data['rating'] as num?)?.toDouble(),
+    );
+  }
   Map<String, dynamic> toFirestore() {
     return {
       'perfumeId': perfumeId,

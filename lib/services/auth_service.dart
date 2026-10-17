@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart'; // Para usar debugPrint
+
 import 'users_service.dart';
 
 class AuthService {
@@ -16,7 +17,11 @@ class AuthService {
   User? get currentUser => _auth.currentUser;
 
   // 4. Método para REGISTRAR con email y contraseña
-  Future<String?> registerWithEmail(String email, String password, String displayName) async {
+  Future<String?> registerWithEmail(
+    String email,
+    String password,
+    String displayName,
+  ) async {
     try {
       // VALIDACIÓN: ¿Está libre el nombre de usuario?
       bool isAvailable = await _usersService.isUsernameAvailable(displayName);
@@ -25,10 +30,8 @@ class AuthService {
       }
 
       // CREACIÓN EN FIREBASE AUTH
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-          email: email,
-          password: password
-      );
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       final user = userCredential.user;
 
@@ -45,7 +48,6 @@ class AuthService {
       }
 
       return null; // Registro completo y perfecto
-
     } on FirebaseAuthException catch (e) {
       // Capturamos los errores
       debugPrint('Error de Firebase Auth (Registro): ${e.code}');

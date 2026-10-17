@@ -7,9 +7,7 @@ class VaultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("ParfumDex"),
-      ),
+      appBar: AppBar(title: const Text("ParfumDex")),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
