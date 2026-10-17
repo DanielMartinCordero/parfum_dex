@@ -79,7 +79,7 @@ class AppRoutes {
                     GoRoute(
                       path: 'detail',
                       builder: (context, state) {
-                        final perfume = state.extra as Perfume;
+                        final perfume = state.extra as Perfume; //Le mandamos el perfume a la details que necesita mostrarlo
                         return PerfumeDetailScreen(perfume: perfume);
                       },
                     ),

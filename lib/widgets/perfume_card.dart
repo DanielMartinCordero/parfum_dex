@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../models/perfume.dart';
 
 /// Tarjeta vertical del catálogo: imagen, marca, nombre, precio y mililitros.
 class PerfumeCard extends StatelessWidget {
   final Perfume perfume;
-  final VoidCallback? onTap;
 
-  const PerfumeCard({super.key, required this.perfume, this.onTap});
+  const PerfumeCard({super.key, required this.perfume});
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,10 @@ class PerfumeCard extends StatelessWidget {
         side: BorderSide(color: Colors.grey.shade200),
       ),
       child: InkWell(
-        onTap: onTap,
+        // Al tocar, navegamos a la ruta hija y le pasamos el objeto 'perfume' entero por la propiedad 'extra'
+        onTap: () {
+          context.push('/explore/detail', extra: perfume);
+        },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -35,7 +38,7 @@ class PerfumeCard extends StatelessWidget {
                   children: [
                     Positioned.fill(
                       child: Hero(
-                        tag: 'perfume-${perfume.brand}-${perfume.name}',
+                        tag: 'perfume-${perfume.id}', // Usamos el ID único
                         child: Image.network(
                           perfume.imageUrl,
                           fit: BoxFit.contain,

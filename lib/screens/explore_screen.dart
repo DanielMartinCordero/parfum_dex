@@ -55,10 +55,15 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => _searchFocusNode.unfocus(),
-      behavior: HitTestBehavior.opaque,
-      child: Column(
+    return Scaffold(
+      // Añadimos el AppBar
+      appBar: AppBar(
+        title: const Text("ParfumDex"),
+      ),
+      body: GestureDetector(
+        onTap: () => _searchFocusNode.unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Column(
         children: [
           SearchBarWidget(
             controller: _searchController,
@@ -135,18 +140,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   itemCount: filteredPerfumes.length,
                   itemBuilder: (context, index) {
                     final perfume = filteredPerfumes[index];
-                    return PerfumeCard(
-                      perfume: perfume,
-                      onTap: () {
-                        // Pendiente por implementar pantalla de detalles
-                      },
-                    );
+                    return PerfumeCard(perfume: perfume);
                   },
                 );
               },
             ),
           ),
         ],
+      ),
       ),
     );
   }
