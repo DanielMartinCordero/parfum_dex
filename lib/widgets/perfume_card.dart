@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../models/perfume.dart';
 
 /// Tarjeta vertical del catálogo: imagen, marca, nombre, precio y mililitros.
@@ -21,9 +22,9 @@ class PerfumeCard extends StatelessWidget {
         side: BorderSide(color: Colors.grey.shade200),
       ),
       child: InkWell(
-        // Al tocar, navegamos a la ruta hija y le pasamos el objeto 'perfume' entero por la propiedad 'extra'
+        // Al tocar, navegamos usando el ID en la URL y el objeto en memoria
         onTap: () {
-          context.push('/explore/detail', extra: perfume);
+          context.go('/explore/detail/${perfume.id}', extra: perfume);
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -48,7 +49,9 @@ class PerfumeCard extends StatelessWidget {
                               child: SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
                             );
                           },
@@ -65,7 +68,9 @@ class PerfumeCard extends StatelessWidget {
                         left: 0,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 5, vertical: 2),
+                            horizontal: 5,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.deepPurple.withValues(alpha: 0.9),
                             borderRadius: BorderRadius.circular(4),
@@ -128,8 +133,12 @@ class PerfumeCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: offer != null ? 14 : 11,
-                              fontWeight: offer != null ? FontWeight.w800 : FontWeight.w500,
-                              color: offer != null ? Colors.deepPurple : Colors.grey.shade500,
+                              fontWeight: offer != null
+                                  ? FontWeight.w800
+                                  : FontWeight.w500,
+                              color: offer != null
+                                  ? Colors.deepPurple
+                                  : Colors.grey.shade500,
                             ),
                           ),
                         ),
@@ -140,7 +149,9 @@ class PerfumeCard extends StatelessWidget {
                             right: 0,
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 2),
+                                horizontal: 5,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.deepPurple.withValues(alpha: 0.9),
                                 borderRadius: BorderRadius.circular(4),
