@@ -335,41 +335,47 @@ class _PerfumeCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    Text(
-                      offer != null
-                          ? '${offer.price.toStringAsFixed(0)} €'
-                          : 'Ver precios',
-                      style: TextStyle(
-                        fontSize: offer != null ? 14 : 11,
-                        fontWeight:
-                        offer != null ? FontWeight.w800 : FontWeight.w500,
-                        color: offer != null
-                            ? Colors.deepPurple
-                            : Colors.grey.shade500,
-                      ),
-                    ),
-                    Text(
-                      '${perfume.nominalMl} ml}',
-                    ),
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.deepPurple.withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          '${perfume.nominalMl.toString()}ml',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.bold,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            offer != null
+                                ? '${offer.price.toStringAsFixed(0)} €'
+                                : 'Ver opciones',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: offer != null ? 14 : 11,
+                              fontWeight: offer != null ? FontWeight.w800 : FontWeight.w500,
+                              color: offer != null ? Colors.deepPurple : Colors.grey.shade500,
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 4),
+                        if (offer != null) //No tiene sentido mostrar una cantidad sin precio
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.deepPurple.withValues(alpha: 0.9),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '${perfume.nominalMl} ml',
+                                maxLines: 1,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
