@@ -28,7 +28,7 @@ class VaultItem {
   });
   double? get fillPercentage {
     if (remainingMl == null) {
-      debugPrint('Error: El nivel de llenado no está definido.');
+      debugPrint('No se ha definido el contenido restante');
       return null;
     }
     if (capacityMl <= 0) return 0.0;
@@ -37,7 +37,7 @@ class VaultItem {
 
   double? get costPerSpray {
     if (purchasePrice == null) {
-      debugPrint("Error: El precio de compra no está definido.");
+      debugPrint("No se ha definido el precio de compra");
       return null;
     }
     if (capacityMl <= 0 || purchasePrice! <= 0) return 0.0;

@@ -91,6 +91,14 @@ class AppRoutes {
               ),
             ]
           ),
+          StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: vault,
+                  builder: (context, state) => const VaultScreen(), //Pendiente de implementar el armario
+                )
+              ]
+          ),
             StatefulShellBranch(
               routes: [
                 GoRoute(
@@ -98,7 +106,7 @@ class AppRoutes {
                   builder: (context, state) => const ProfileScreen(), //Pendiente de implementar el perfil
                 )
               ]
-            )
+            ),
           ]
       ),
     ],
