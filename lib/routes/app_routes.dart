@@ -8,6 +8,8 @@ import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
 import '../screens/home_shell.dart';
 import '../screens/vault_screen.dart';
+import '../screens/perfume_detail_screen.dart';
+import '../models/perfume.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -72,7 +74,16 @@ class AppRoutes {
               routes: [
                 GoRoute(
                   path: explore,
-                  builder: (context, state) => const ExploreScreen(), //Pendiente de implementar el buscador
+                  builder: (context, state) => const ExploreScreen(),
+                  routes: [
+                    GoRoute(
+                      path: 'detail',
+                      builder: (context, state) {
+                        final perfume = state.extra as Perfume;
+                        return PerfumeDetailScreen(perfume: perfume);
+                      },
+                    ),
+                  ]
                 ),
               ]
             ),
