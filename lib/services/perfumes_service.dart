@@ -19,14 +19,14 @@ class PerfumesService {
   Future<List<Perfume>> getPerfumes({int limit = 50}) async {
     try {
       final querySnapshot = await _perfumesRef.limit(limit).get();
-
+      print("Perfumes obtenidos de Firestore");
       // Convertimos cada DocumentSnapshot<Perfume> en un objeto Perfume limpio
       return querySnapshot.docs.map((doc) => doc.data()).toList();
     }
     catch (e) {
       print('Error al obtener perfumes de Firestore: $e');
       // Relanzamos el error (rethrow) para que la pantalla pueda capturar el fallo
-      // y mostrar el estado de error con el botón "Reintentar" que exige la rúbrica.
+      // y mostrar el estado de error con el botón "Reintentar".
       rethrow;
     }
   }
