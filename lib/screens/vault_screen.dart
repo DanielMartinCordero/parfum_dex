@@ -138,6 +138,10 @@ class _VaultScreenState extends State<VaultScreen> {
                           width: 50,
                           height: 50,
                           fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.image_not_supported_outlined,
+                            color: Colors.grey.shade400,
+                          ),
                         ),
                         title: Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis),
                         subtitle: Text('${item.remainingMl} ml / ${item.capacityMl} ml'),

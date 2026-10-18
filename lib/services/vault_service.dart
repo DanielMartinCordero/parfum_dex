@@ -25,30 +25,19 @@ class VaultService {
         );
   }
   Future<int> getVaultItemsCount() async {
-    try {
-      // Hacemos una consulta Count
-      final countQuery = await _userVaultRef.count().get();
-      return countQuery.count ?? 0;
-    }
-    catch (e) {
-      print('Error al contar los perfumes: $e');
-      return 0;
-    }
+    // Si falla la red o los permisos, lanzará la excepción
+    final countQuery = await _userVaultRef.count().get();
+    return countQuery.count ?? 0;
   }
 
   // Comprueba si el usuario ya tiene este perfume en la bóveda
   Future<bool> isPerfumeInVault(String perfumeId) async {
-    try {
-      final querySnapshot = await _userVaultRef
-          .where('perfumeId', isEqualTo: perfumeId)
-          .limit(1)
-          .get();
-          
-      return querySnapshot.docs.isNotEmpty;
-    } catch (e) {
-      print('Error al comprobar si el perfume existe: $e');
-      return false; // Ante la duda o error de red, asumimos false para no bloquear la app
-    }
+    final querySnapshot = await _userVaultRef
+        .where('perfumeId', isEqualTo: perfumeId)
+        .limit(1)
+        .get();
+        
+    return querySnapshot.docs.isNotEmpty;
   }
   // Usamos un Stream para escuchar los cambios en tiempo real, pues desde explore_screen
   // se harán cambios que deben ser visibles en vault_screen
@@ -71,8 +60,6 @@ class VaultService {
         imageUrl: perfume.imageUrl,
         capacityMl: perfume.nominalMl,
         remainingMl: perfume.nominalMl.toDouble(),
-        purchasePrice: 0.0,
-        rating: 0.0,
         addedAt: DateTime.now(), // Asignamos la fecha exacta de ahora
       );
       await _userVaultRef.add(newPerfume);
