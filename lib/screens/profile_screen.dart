@@ -59,15 +59,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() { _isSaving = true; });
 
     try {
-      // Validamos que no exista ya el nombre (misma validación que el registro)
-      final bool isAvailable = await _usersService.isUsernameAvailable(_nameController.text.trim());
-      if (!isAvailable) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Este nombre de usuario ya está en uso.'), backgroundColor: Colors.red),
-        );
-        return;
-      }
 
       await _usersService.updateDisplayName(_nameController.text.trim());
       
@@ -84,9 +75,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al guardar: $e'), backgroundColor: Colors.red),
-      );
+      SnackBar(content: Text('No se pudo guardar el nombre. Inténtalo de nuevo.'), backgroundColor: Colors.red);
     } finally {
       if (mounted) setState(() { _isSaving = false; });
     }

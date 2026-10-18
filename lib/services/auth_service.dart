@@ -23,11 +23,6 @@ class AuthService {
     String displayName,
   ) async {
     try {
-      // VALIDACIÓN: ¿Está libre el nombre de usuario?
-      bool isAvailable = await _usersService.isUsernameAvailable(displayName);
-      if (!isAvailable) {
-        return 'El nombre de usuario "$displayName" ya está en uso. Por favor, elige otro.';
-      }
 
       // CREACIÓN EN FIREBASE AUTH
       UserCredential userCredential = await _auth

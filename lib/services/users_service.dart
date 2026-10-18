@@ -91,9 +91,7 @@ class UsersService {
       await user.updateDisplayName(newName);
       
       // B) Actualizamos en Firestore (solo ese campo específico)
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
+      await _usersRef.doc(user.uid)
           .update({'displayName': newName});
           
     } catch (e) {
