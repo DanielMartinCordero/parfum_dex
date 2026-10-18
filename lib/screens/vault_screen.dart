@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import '../models/vault_item.dart';
 import '../services/vault_service.dart';
+import '../widgets/vault_item_card.dart'; // Importamos la nueva tarjeta
 
 class VaultScreen extends StatefulWidget {
   const VaultScreen({super.key});
@@ -131,25 +132,12 @@ class _VaultScreenState extends State<VaultScreen> {
                   separatorBuilder: (context, index) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final item = vaultItems[index];
-                    return Card(
-                      child: ListTile(
-                        leading: Image.network(
-                          item.imageUrl,
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => Icon(
-                            Icons.image_not_supported_outlined,
-                            color: Colors.grey.shade400,
-                          ),
-                        ),
-                        title: Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        subtitle: Text('${item.remainingMl} ml / ${item.capacityMl} ml'),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                        onTap: () {
-                          // TODO: Abrir detalles de este VaultItem
-                        },
-                      ),
+                    return VaultItemCard(
+                      item: item,
+                      onTap: () {
+                        // Pendiente de implementar navegación a los detalles del VaultItem
+                        print("Tocado: ${item.name}");
+                      },
                     );
                   },
                 ),
