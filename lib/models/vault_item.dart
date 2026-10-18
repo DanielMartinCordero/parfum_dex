@@ -31,7 +31,8 @@ class VaultItem {
     final double actualRemaining = remainingMl ?? capacityMl.toDouble();
 
     if (capacityMl <= 0) return 0.0;
-    return (remainingMl! / capacityMl).clamp(0.0, 1.0);
+    // Usamos actualRemaining en lugar de remainingMl! para evitar el fallo de nulos
+    return (actualRemaining / capacityMl).clamp(0.0, 1.0);
   }
 
   double? get costPerSpray {
