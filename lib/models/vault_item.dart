@@ -12,7 +12,7 @@ class VaultItem {
   remainingMl; //Opcionales para no obligar al usuario a rellenarlos
   final double? purchasePrice;
   final double? rating;
-  final DateTime addedAt; // NUEVO: Fecha de añadido al armario
+  final DateTime addedAt; //Fecha de añadido al armario
 
   const VaultItem({
     required this.id,
@@ -26,11 +26,10 @@ class VaultItem {
     this.rating,
     required this.addedAt, // Requerido en el constructor
   });
-  double? get fillPercentage {
-    if (remainingMl == null) {
-      debugPrint('No se ha definido el contenido restante');
-      return null;
-    }
+  double get fillPercentage {
+    // Si por algún error antiguo no hay remainingMl, asumimos que está lleno
+    final double actualRemaining = remainingMl ?? capacityMl.toDouble();
+
     if (capacityMl <= 0) return 0.0;
     return (remainingMl! / capacityMl).clamp(0.0, 1.0);
   }
