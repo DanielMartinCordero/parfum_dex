@@ -95,7 +95,7 @@ class AppRoutes {
               routes: [
                 GoRoute(
                   path: vault,
-                  builder: (context, state) => const VaultScreen(), //Pendiente de implementar el armario
+                  builder: (context, state) => const VaultScreen(),
                 )
               ]
           ),
@@ -103,7 +103,7 @@ class AppRoutes {
               routes: [
                 GoRoute(
                  path: profile,
-                  builder: (context, state) => const ProfileScreen(), //Pendiente de implementar el perfil
+                  builder: (context, state) => const ProfileScreen(),
                 )
               ]
             ),
