@@ -1,6 +1,7 @@
 import 'dart:async'; // <-- Necesario para StreamSubscription
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../routes/app_routes.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import '../models/vault_item.dart';
 import '../services/vault_service.dart';
@@ -61,7 +62,9 @@ class _VaultScreenState extends State<VaultScreen> {
   void dispose() {
     //Cancelamos la suscripción activa al destruir la pantalla
     _vaultSubscription?.cancel();
+    print("vault_suscription cancelada");
     super.dispose();
+    print("screen destruida");
   }
 
   @override
@@ -128,7 +131,7 @@ class _VaultScreenState extends State<VaultScreen> {
               ),
               const SizedBox(height: 32),
               ElevatedButton.icon(
-                onPressed: () => context.go('/explore'),
+                onPressed: () => context.go(AppRoutes.explore),
                 icon: const Icon(Icons.search),
                 label: const Text('Añadir mis perfumes'),
                 style: ElevatedButton.styleFrom(
@@ -154,7 +157,7 @@ class _VaultScreenState extends State<VaultScreen> {
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               ElevatedButton.icon(
-                onPressed: isFull ? null : () => context.go('/explore'),
+                onPressed: isFull ? null : () => context.go(AppRoutes.explore),
                 icon: Icon(
                   isFull ? Icons.block : Icons.add,
                   color: isFull ? Colors.white : null,

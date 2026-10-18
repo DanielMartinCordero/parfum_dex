@@ -84,7 +84,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         );
         // Redirigimos a la pantalla inicial
-        context.go('/explore');
+        context.go(AppRoutes.explore);
       }
     }
   }

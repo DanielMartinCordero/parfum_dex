@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../routes/app_routes.dart'; // Añadimos el import de AppRoutes
 
 import '../models/perfume.dart';
 
@@ -24,7 +25,8 @@ class PerfumeCard extends StatelessWidget {
       child: InkWell(
         // Al tocar, navegamos usando el ID en la URL y el objeto en memoria
         onTap: () {
-          context.go('/explore/detail/${perfume.id}', extra: perfume);
+          // Usamos interpolación de strings para construir la ruta dinámicamente
+          context.go('${AppRoutes.explore}/detail/${perfume.id}', extra: perfume);
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

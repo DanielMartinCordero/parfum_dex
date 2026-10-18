@@ -39,7 +39,6 @@ class _SplashScreenState extends State<SplashScreen> {
       context.go(AppRoutes.onboarding);
     } else if (user != null) {
       // Caso 2: Ya usó la app y ya está logueado -> Pantalla Principal (Vault)
-      // Nota: Cambia '/home' por la ruta real de tu BottomNavigationBar cuando la crees
       context.go(AppRoutes.explore);
     } else {
       // Caso 3: Ya usó la app, pero no ha iniciado sesión (o cerró sesión) -> Login
