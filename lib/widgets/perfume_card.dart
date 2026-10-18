@@ -144,10 +144,7 @@ class PerfumeCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         if (offer != null) //No tiene sentido mostrar una cantidad sin precio
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
+                            Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 5,
                                 vertical: 2,
@@ -166,7 +163,6 @@ class PerfumeCard extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          ),
                       ],
                     ),
                   ],
