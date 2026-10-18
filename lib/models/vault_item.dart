@@ -12,6 +12,7 @@ class VaultItem {
   remainingMl; //Opcionales para no obligar al usuario a rellenarlos
   final double? purchasePrice;
   final double? rating;
+  final DateTime addedAt; // NUEVO: Fecha de añadido al armario
 
   const VaultItem({
     required this.id,
@@ -23,6 +24,7 @@ class VaultItem {
     this.remainingMl,
     this.purchasePrice,
     this.rating,
+    required this.addedAt, // Requerido en el constructor
   });
   double? get fillPercentage {
     if (remainingMl == null) {
@@ -65,6 +67,8 @@ class VaultItem {
       remainingMl: (data['remainingMl'] as num?)?.toDouble(),
       purchasePrice: (data['purchasePrice'] as num?)?.toDouble(),
       rating: (data['rating'] as num?)?.toDouble(),
+      // Conversión segura de Timestamp de Firestore a DateTime
+      addedAt: (data['addedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
   Map<String, dynamic> toFirestore() {
@@ -77,6 +81,7 @@ class VaultItem {
       'remainingMl': remainingMl,
       'purchasePrice': purchasePrice,
       'rating': rating,
+      'addedAt': Timestamp.fromDate(addedAt), // Conversión a formato Firebase
     };
   }
 }
