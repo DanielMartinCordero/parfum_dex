@@ -55,18 +55,25 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Manejo de imagen de red con fallback local
-            Image.network(
-              'https://picsum.photos/200', // Imagen placeholder (temporal)
+          Image.network(
+          'https://picsum.photos/200',
+          width: 150,
+          height: 150,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return const SizedBox(
               width: 150,
               height: 150,
-              errorBuilder: (context, error, stackTrace) {
-                // Si el móvil no tiene internet, muestra este icono
-                return const Icon(
-                  Icons.local_florist,
-                  size: 150,
-                  color: Colors.grey,
-                );
-              },
+              child: Center(child: CircularProgressIndicator()),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return const Icon(
+              Icons.local_florist,
+              size: 150,
+              color: Colors.grey,
+            );
+          },
             ),
             const SizedBox(height: 24),
             const Text(
