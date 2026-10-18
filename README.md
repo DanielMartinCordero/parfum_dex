@@ -137,10 +137,6 @@ flutter analyze
 - Credentials and per-project Firebase files are excluded by `.gitignore` (see the table above). Never commit service-account keys.
 - **Onboarding flag:** whether onboarding was already seen is stored locally with `shared_preferences` (see `lib/services/preferences_service.dart`). To see onboarding again, clear the app data (Android) or the site data (web).
 
-## Testing
-
-Manual test log, with results per platform (Android and Web) and issues found: [docs/TESTING.md](docs/TESTING.md).
-
 ## Known limitations
 
 - Display names are not unique.
