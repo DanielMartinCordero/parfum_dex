@@ -1,6 +1,8 @@
+
 import 'package:flutter/material.dart';
 import '../models/perfume.dart';
 import '../services/perfumes_service.dart';
+import '../services/vault_service.dart';
 
 class PerfumeDetailScreen extends StatefulWidget {
   final String perfumeId;
@@ -18,6 +20,8 @@ class PerfumeDetailScreen extends StatefulWidget {
 
 class _PerfumeDetailScreenState extends State<PerfumeDetailScreen> {
   late Future<Perfume?> _perfumeFuture;
+  final VaultService _vaultService = VaultService();
+  bool _isAdding = false; // Bloqueo para evitar la condición de carrera
 
   @override
   void initState() {
@@ -31,6 +35,67 @@ class _PerfumeDetailScreenState extends State<PerfumeDetailScreen> {
     // vamos a Firebase a descargarlo usando el ID de la URL.
     else {
       _perfumeFuture = PerfumesService().getPerfumeById(widget.perfumeId);
+    }
+  }
+
+  // Función extraída para manejar la lógica de añadir al armario
+  Future<void> _handleAddPerfumeToVault(Perfume perfume) async {
+    setState(() {
+      _isAdding = true;
+    });
+
+    try {
+      final bool alreadyExists = await _vaultService.isPerfumeInVault(perfume.id);
+      
+      if (!mounted) return;
+
+      if (alreadyExists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('¡Ya tienes ${perfume.name} en tu armario!'),
+            backgroundColor: Colors.orange.shade800,
+          ),
+        );
+        return; 
+      }
+
+      final count = await _vaultService.getVaultItemsCount();
+
+      if (!mounted) return;
+
+      if (count >= VaultService.freeLimit) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Límite de 5 perfumes alcanzado. No puedes añadir más en la versión gratuita.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      await _vaultService.addPerfumeToVault(perfume);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${perfume.name} añadido a tu Bóveda!'),
+            backgroundColor: Colors.green,
+          )
+      );
+    } catch(e) {
+      print('Error al añadir el perfume: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo completar la operación. Inténtalo de nuevo.'),
+          backgroundColor: Colors.red,
+        )
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAdding = false;
+        });
+      }
     }
   }
 
@@ -77,6 +142,10 @@ class _PerfumeDetailScreenState extends State<PerfumeDetailScreen> {
                       child: Image.network(
                         perfume.imageUrl,
                         fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.image_not_supported_outlined,
+                          color: Colors.grey.shade400,
+                        ),
                       ),
                     ),
                   ),
@@ -216,7 +285,7 @@ class _PerfumeDetailScreenState extends State<PerfumeDetailScreen> {
                             : const Text(
                             "Agotado", style: TextStyle(color: Colors.red)),
                         onTap: () {
-                          // Usar url_launcher para abrir offer.productUrl en el navegador
+                          //Pendiente de implementar urls reales
                         },
                       );
                     }),
@@ -229,7 +298,37 @@ class _PerfumeDetailScreenState extends State<PerfumeDetailScreen> {
                             "No hay ofertas disponibles para este perfume.",
                             style: TextStyle(color: Colors.grey)),
                       ),
-                    ]
+                    ],
+                  const Divider(height: 32),
+                  
+                  // Botón centrado, sin ocupar todo el ancho, con márgenes de seguridad por abajo
+                  SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 24.0, top: 8.0),
+                      child: Center(
+                        child: SizedBox(
+                          width: 260, // Ancho fijo para que no se estire al 100%
+                          height: 50, // Un poco más alto para que sea fácil de tocar
+                          child: ElevatedButton.icon(
+                            // Desactiva el botón si _isAdding es true
+                            onPressed: _isAdding ? null : () => _handleAddPerfumeToVault(perfume),
+                            // Cambia el icono por un progreso si está cargando
+                            icon: _isAdding
+                                ? const SizedBox(
+                                    width: 20, 
+                                    height: 20, 
+                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                                  )
+                                : const Icon(Icons.add_box),
+                            label: Text(
+                              _isAdding ? 'Comprobando...' : 'Añadir a mi armario',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
                 ],
               ),
             ),
