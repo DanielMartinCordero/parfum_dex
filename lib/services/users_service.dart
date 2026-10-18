@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/user_profile.dart';
 
@@ -63,6 +64,41 @@ class UsersService {
       debugPrint("Error comprobando disponibilidad del username: $e");
       // Por seguridad, si falla la base de datos, decimos que no está disponible
       return false;
+    }
+  }
+
+  // 6. Obtener el perfil del usuario actual
+  Future<UserProfile?> getCurrentUserProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+
+    try {
+      final docSnapshot = await _usersRef.doc(user.uid).get();
+      return docSnapshot.data();
+    } catch (e) {
+      debugPrint("Error al obtener el perfil: $e");
+      return null;
+    }
+  }
+
+  // 7. Actualizar el nombre (displayName)
+  Future<void> updateDisplayName(String newName) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception("Usuario no logueado");
+
+    try {
+      // A) Actualizamos en Auth
+      await user.updateDisplayName(newName);
+      
+      // B) Actualizamos en Firestore (solo ese campo específico)
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({'displayName': newName});
+          
+    } catch (e) {
+      debugPrint("Error al actualizar el nombre: $e");
+      rethrow;
     }
   }
 }
