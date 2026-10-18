@@ -7,7 +7,6 @@ class VaultItem {
   final String brand;
   final String name;
   final String imageUrl;
-  final String itemType; //Bote o decant
   final int capacityMl;
   final double?
   remainingMl; //Opcionales para no obligar al usuario a rellenarlos
@@ -20,7 +19,6 @@ class VaultItem {
     required this.brand,
     required this.name,
     required this.imageUrl,
-    required this.itemType,
     required this.capacityMl,
     this.remainingMl,
     this.purchasePrice,
@@ -61,7 +59,6 @@ class VaultItem {
       name: data['perfumeName'] as String? ?? 'Perfume sin nombre',
       brand: data['brand'] as String? ?? 'Marca desconocida',
       imageUrl: data['imageUrl'] as String? ?? '',
-      itemType: data['itemType'] as String? ?? 'bottle',
       // Parseo defensivo num -> int para prevenir errores de tipo de Firestore
       capacityMl: (data['capacityMl'] as num?)?.toInt() ?? 0,
       //Comprobación por si viene null
@@ -76,7 +73,6 @@ class VaultItem {
       'perfumeName': name,
       'brand': brand,
       'imageUrl': imageUrl,
-      'itemType': itemType,
       'capacityMl': capacityMl,
       'remainingMl': remainingMl,
       'purchasePrice': purchasePrice,
