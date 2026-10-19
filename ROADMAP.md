@@ -49,24 +49,24 @@ An end-to-end multiplatform ecosystem tailored for fragrance collectors and enth
 
 #### 1. Architecture & Source Control
 
-* [ ] Enforce strict domain/data/presentation separation under `lib/`:
+* [x] Enforce strict domain/data/presentation separation under `lib/`:
 * `lib/models/` (Data classes, domain models)
 * `lib/screens/` (Stateful/Stateless page layouts)
 * `lib/services/` (External APIs, Firebase abstractions)
 * `lib/widgets/` (Reusable, atomic UI components)
 
 
-* [ ] Maintain structured version control with collaborator access enabled and a minimum of **15 progressive, semantic commits**.
-* [ ] Provide comprehensive `README.md` detailing architectural trade-offs and structural layers.
+* [x] Maintain structured version control with collaborator access enabled and a minimum of **15 progressive, semantic commits**.
+* [x] Provide comprehensive `README.md` detailing architectural trade-offs and structural layers.
 
 #### 2. Application Entry & Onboarding
 
-* [ ] **SplashScreen:** Remote image resolution via network URL, handling all asynchronous states:
+* [x] **SplashScreen:** Remote image resolution via network URL, handling all asynchronous states:
 * Loading state: Centered `CircularProgressIndicator`.
 * Error state: Graceful fallback to bundled local asset (avoiding unhandled blank screens).
 
 
-* [ ] **OnboardingFlow:** 3-step swipeable carousel (introducing Vault, Tare Calculator, and Price Aggregator):
+* [x] **OnboardingFlow:** 3-step swipeable carousel (introducing Vault, Tare Calculator, and Price Aggregator):
 * Skip action toggle.
 * Persistent execution flag backed by `shared_preferences` to prevent redundant presentations after initial launch.
 
@@ -74,19 +74,19 @@ An end-to-end multiplatform ecosystem tailored for fragrance collectors and enth
 
 #### 3. Identity & Lifecycle Management
 
-* [ ] Firebase Authentication implementation via email/password credentials.
-* [ ] Comprehensive exception handling with clear UI messaging for auth faults:
+* [x] Firebase Authentication implementation via email/password credentials.
+* [x] Comprehensive exception handling with clear UI messaging for auth faults:
 * `email-already-in-use`
 * `weak-password`
 * `invalid-credential` / `user-not-found` / `wrong-password`
 
 
-* [ ] Memory leak prevention: Deterministic cancellation of active data streams (`StreamSubscription.cancel()`) inside widget `dispose()` methods.
-* [ ] Security documentation: Register private client infrastructure files excluded by `.gitignore` (`google-services.json`, private keys).
+* [x] Memory leak prevention: Deterministic cancellation of active data streams (`StreamSubscription.cancel()`) inside widget `dispose()` methods.
+* [x] Security documentation: Register private client infrastructure files excluded by `.gitignore` (`google-services.json`, private keys).
 
 #### 4. Typed Cloud Persistence (Firestore)
 
-* [ ] **`perfumes` collection:** Provision at least 6 canonical benchmark documents containing:
+* [x] **`perfumes` collection:** Provision at least 6 canonical benchmark documents containing:
 * `name` (*String*)
 * `brand` (*String*)
 * `imageUrl` (*String*)
@@ -95,19 +95,19 @@ An end-to-end multiplatform ecosystem tailored for fragrance collectors and enth
 * `retailPrices` (*List*)
 
 
-* [ ] **`users` collection:** Base profile records linked directly to the authenticated UID.
-* [ ] Strict domain mapping via **`.withConverter`** on all Firestore references, enforcing immutable data objects over untyped `Map<String, dynamic>` maps.
+* [x] **`users` collection:** Base profile records linked directly to the authenticated UID.
+* [x] Strict domain mapping via **`.withConverter`** on all Firestore references, enforcing immutable data objects over untyped `Map<String, dynamic>` maps.
 
 #### 5. Declarative Routing & Dynamic Collections
 
-* [ ] Centralized named route definitions on `MaterialApp` with strongly-typed argument routing (avoiding inline widget instantiations).
-* [ ] **Persistent BottomNavigationBar** orchestrating 3 core view targets:
+* [x] Centralized named route definitions on `MaterialApp` with strongly-typed argument routing (avoiding inline widget instantiations).
+* [x] **Persistent BottomNavigationBar** orchestrating 3 core view targets:
 * **View 1 (Catalog - `GridView`):** Master collection grid with remote cover image, name, brand, and best-price indicator.
 * **View 2 (Personal Vault - `ListView`):** User inventory list with dynamic remaining fluid level indicators.
 * **View 3 (Profile):** Aggregated vault metrics and clean sign-out orchestration.
 
 
-* [ ] Mandatory asynchronous state feedback across all collection screens:
+* [x] Mandatory asynchronous state feedback across all collection screens:
 1. *Loading:* Centered indicator / skeleton shimmer.
 2. *Empty:* Contextual illustration with corrective action CTA.
 3. *Error:* Explicit failure state with an active retry handler.
@@ -116,13 +116,13 @@ An end-to-end multiplatform ecosystem tailored for fragrance collectors and enth
 
 #### 6. Multiplatform Verification & QA
 
-* [ ] Cross-platform execution parity verified on both target runtimes:
+* [x] Cross-platform execution parity verified on both target runtimes:
 * Android Emulator / Physical Device.
 * Desktop Web (Chromium Engine).
 
 
-* [ ] Documented QA verification matrix covering test scenario, expected behavior, actual result, and web/native runtime differences (e.g., CORS handling).
-* [ ] Zero-friction setup guide in `README.md` enabling clean clone-and-run execution.
+* [x] Documented QA verification matrix covering test scenario, expected behavior, actual result, and web/native runtime differences (e.g., CORS handling).
+* [x] Zero-friction setup guide in `README.md` enabling clean clone-and-run execution.
 
 ---
 
