@@ -1,0 +1,12 @@
+{
+  "name": "parfum-dex-seed",
+  "private": true,
+  "description": "Carga el catálogo de ejemplo en la colección perfumes de Firestore",
+  "type": "module",
+  "scripts": {
+    "seed": "node seed.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}

@@ -12,7 +12,6 @@ android/app/google-services.json
 ios/Runner/GoogleService-Info.plist
 macos/Runner/GoogleService-Info.plist
 firebase_options.dart
-firebase.json
 
 # --- Caché local de Firebase CLI ---
 .firebase/
@@ -81,3 +80,6 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# --- Script de semilla ---
+tool/seed/node_modules/

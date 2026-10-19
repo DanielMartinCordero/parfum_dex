@@ -1,0 +1,137 @@
+[
+  {
+    "id": "dior-sauvage-edt",
+    "brand": "Dior",
+    "name": "Sauvage",
+    "concentration": "EDT",
+    "nominalMl": 100,
+    "imageUrl": "",
+    "season": ["spring", "summer"],
+    "notes": {
+      "top": ["bergamota", "pimienta"],
+      "heart": ["pimienta de Sichuan", "lavanda", "geranio", "elemí"],
+      "base": ["ambroxan", "cedro", "ládano"]
+    },
+    "tareInfo": { "emptyBottleWeight": 255, "liquidDensity": 0.85 },
+    "prices": [
+      { "storeName": "Tienda de ejemplo A", "price": 89.95, "productUrl": "", "inStock": true },
+      { "storeName": "Tienda de ejemplo B", "price": 82.5, "productUrl": "", "inStock": false }
+    ]
+  },
+  {
+    "id": "chanel-bleu-de-chanel-edp",
+    "brand": "Chanel",
+    "name": "Bleu de Chanel",
+    "concentration": "EDP",
+    "nominalMl": 100,
+    "imageUrl": "",
+    "season": ["autumn", "winter", "spring"],
+    "notes": {
+      "top": ["pomelo", "limón", "menta", "pimienta rosa"],
+      "heart": ["jengibre", "nuez moscada", "jazmín"],
+      "base": ["incienso", "vetiver", "cedro", "sándalo"]
+    },
+    "tareInfo": { "emptyBottleWeight": 290, "liquidDensity": 0.85 },
+    "prices": [
+      { "storeName": "Tienda de ejemplo A", "price": 128.0, "productUrl": "", "inStock": true }
+    ]
+  },
+  {
+    "id": "ysl-libre-edp",
+    "brand": "Yves Saint Laurent",
+    "name": "Libre",
+    "concentration": "EDP",
+    "nominalMl": 90,
+    "imageUrl": "",
+    "season": ["autumn", "winter"],
+    "notes": {
+      "top": ["lavanda", "mandarina", "grosella negra"],
+      "heart": ["lavanda", "flor de azahar", "jazmín"],
+      "base": ["vainilla", "almizcle", "cedro", "ámbar gris"]
+    },
+    "prices": [
+      { "storeName": "Tienda de ejemplo B", "price": 115.0, "productUrl": "", "inStock": true }
+    ]
+  },
+  {
+    "id": "lancome-la-vie-est-belle-edp",
+    "brand": "Lancôme",
+    "name": "La Vie Est Belle",
+    "concentration": "EDP",
+    "nominalMl": 100,
+    "imageUrl": "",
+    "season": ["autumn", "winter"],
+    "notes": {
+      "top": ["grosella negra", "pera"],
+      "heart": ["iris", "jazmín", "flor de azahar"],
+      "base": ["praliné", "vainilla", "pachulí", "haba tonka"]
+    },
+    "tareInfo": { "emptyBottleWeight": 230, "liquidDensity": 0.85 },
+    "prices": []
+  },
+  {
+    "id": "paco-rabanne-1-million-edt",
+    "brand": "Paco Rabanne",
+    "name": "1 Million",
+    "concentration": "EDT",
+    "nominalMl": 100,
+    "imageUrl": "",
+    "season": ["autumn", "winter"],
+    "notes": {
+      "top": ["pomelo", "menta", "mandarina"],
+      "heart": ["rosa", "canela", "especias"],
+      "base": ["cuero", "ámbar", "maderas", "pachulí"]
+    },
+    "prices": [
+      { "storeName": "Tienda de ejemplo A", "price": 74.9, "productUrl": "", "inStock": true },
+      { "storeName": "Tienda de ejemplo B", "price": 69.9, "productUrl": "", "inStock": true }
+    ]
+  },
+  {
+    "id": "jpg-le-male-edt",
+    "brand": "Jean Paul Gaultier",
+    "name": "Le Male",
+    "concentration": "EDT",
+    "nominalMl": 125,
+    "imageUrl": "",
+    "season": ["autumn", "winter"],
+    "notes": {
+      "top": ["lavanda", "menta", "cardamomo", "bergamota"],
+      "heart": ["canela", "flor de azahar", "comino"],
+      "base": ["vainilla", "haba tonka", "ámbar", "sándalo"]
+    },
+    "prices": []
+  },
+  {
+    "id": "carolina-herrera-good-girl-edp",
+    "brand": "Carolina Herrera",
+    "name": "Good Girl",
+    "concentration": "EDP",
+    "nominalMl": 80,
+    "imageUrl": "",
+    "season": ["autumn", "winter"],
+    "notes": {
+      "top": ["almendra", "café"],
+      "heart": ["nardo", "jazmín"],
+      "base": ["haba tonka", "cacao"]
+    },
+    "prices": [
+      { "storeName": "Tienda de ejemplo B", "price": 99.0, "productUrl": "", "inStock": true }
+    ]
+  },
+  {
+    "id": "armani-acqua-di-gio-edt",
+    "brand": "Giorgio Armani",
+    "name": "Acqua di Giò",
+    "concentration": "EDT",
+    "nominalMl": 100,
+    "imageUrl": "",
+    "season": ["spring", "summer"],
+    "notes": {
+      "top": ["lima", "limón", "bergamota", "neroli"],
+      "heart": ["notas marinas", "jazmín", "romero"],
+      "base": ["almizcle blanco", "cedro", "musgo de roble", "pachulí"]
+    },
+    "prices": []
+  }
+]
