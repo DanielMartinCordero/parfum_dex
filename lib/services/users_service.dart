@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/user_profile.dart';
+import '../utils/username_generator.dart';
 
 import 'package:flutter/foundation.dart'; // Para debugPrint
 
@@ -22,49 +23,52 @@ class UsersService {
         );
   }
 
-  // 4. Función para crear el perfil inicial del usuario
-  Future<void> createUserProfile({
+  // 4. Crea el perfil del usuario reservando un username único.
+  //    Prueba los candidatos del generador hasta que uno esté libre.
+  Future<UserProfile> claimUsername({
     required String uid,
     required String email,
     required String displayName,
   }) async {
-    try {
-      final newUserProfile = UserProfile(
+    final base = UsernameGenerator.normalize(displayName);
+
+    for (final handle in UsernameGenerator.candidates(base)) {
+      final profile = UserProfile(
         uid: uid,
         email: email,
         displayName: displayName,
+        username: handle,
         createdAt: DateTime.now(), // Fecha y hora actuales
         isPublic: false, // Por defecto, el armario (vault) será privado
       );
 
-      // Guardamos en Firestore usando la referencia tipada
-      await _usersRef.doc(uid).set(newUserProfile);
-
-      debugPrint("Perfil de usuario creado en Firestore con éxito.");
-    } catch (e) {
-      debugPrint("Error creando el perfil en Firestore: $e");
-      throw Exception("No se pudo crear el perfil en la base de datos.");
+      try {
+        await _createProfileWithUsername(profile);
+        debugPrint("Perfil creado con el username '$handle'.");
+        return profile;
+      } on FirebaseException catch (e) {
+        // Si el handle ya existe, las reglas de Firestore rechazan la
+        // escritura con 'permission-denied': probamos con el siguiente.
+        if (e.code != 'permission-denied') rethrow;
+        debugPrint("El username '$handle' está ocupado, probando otro...");
+      }
     }
+
+    throw Exception("No se pudo generar un nombre de usuario único.");
   }
 
-  // 5. Función para comprobar si un nombre de usuario ya está en uso
-  Future<bool> isUsernameAvailable(String displayName) async {
-    try {
-      // Hacemos una consulta (query) a la colección de usuarios
-      // Buscamos si existe ALGÚN documento donde el campo 'displayName'
-      // sea exactamente igual al que el usuario quiere registrar.
-      final querySnapshot = await _usersRef
-          .where('displayName', isEqualTo: displayName)
-          .limit(1) // Solo necesitamos encontrar 1 para saber que está pillado
-          .get();
+  // 5. Un único intento: reserva el handle y guarda el perfil a la vez.
+  //    El batch es atómico: o se escriben los dos documentos o ninguno.
+  Future<void> _createProfileWithUsername(UserProfile profile) {
+    final batch = _db.batch();
 
-      // Si la consulta está vacía (docs.isEmpty es true), el nombre está libre
-      return querySnapshot.docs.isEmpty;
-    } catch (e) {
-      debugPrint("Error comprobando disponibilidad del username: $e");
-      // Por seguridad, si falla la base de datos, decimos que no está disponible
-      return false;
-    }
+    batch.set(_db.collection('usernames').doc(profile.username), {
+      'uid': profile.uid,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    batch.set(_usersRef.doc(profile.uid), profile);
+
+    return batch.commit();
   }
 
   // 6. Obtener el perfil del usuario actual
@@ -89,11 +93,11 @@ class UsersService {
     try {
       // A) Actualizamos en Auth
       await user.updateDisplayName(newName);
-      
+
       // B) Actualizamos en Firestore (solo ese campo específico)
       await _usersRef.doc(user.uid)
           .update({'displayName': newName});
-          
+
     } catch (e) {
       debugPrint("Error al actualizar el nombre: $e");
       rethrow;
