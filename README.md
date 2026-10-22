@@ -65,7 +65,7 @@ season: ["spring", "summer"]
 notes: { top: [...], heart: [...], base: [...] }
 ```
 
-The catalog shipped with the maintainer's Firebase project is **sample data**: external image URLs and illustrative prices.
+The sample catalog lives in `tool/seed/perfumes.json` (8 perfumes). It is **sample data**: images are empty (the app shows a placeholder icon), store names are placeholders, and prices and empty-bottle weights are illustrative, not measured.
 
 ## Getting started
 
@@ -100,8 +100,23 @@ Choose one:
   1. Create a Firebase project and enable **Authentication > Email/Password** and **Firestore Database**.
   2. Install the FlutterFire CLI and run `flutterfire configure --platforms=android,web`.
      When asked for the Android package name, use `com.parfumdex.parfum_dex`, or change `applicationId` in `android/app/build.gradle.kts` to match the one you register.
-  3. Publish the rules in `firestore.rules` (Firebase console > Firestore > Rules, or `firebase deploy --only firestore:rules`).
-  4. Create a few documents in `perfumes` following the data model above. The catalog is read-only for clients, so add them from the console.
+  3. Publish the rules in `firestore.rules`: `firebase deploy --only firestore:rules` (the project comes from `.firebaserc`; add `--project <id>` for your own), or paste them in Firebase console > Firestore > Rules.
+  4. Load the sample catalog (next section).
+
+### 2b. Load the sample catalog
+
+Clients cannot write to `perfumes`, so the seed script uses the Firebase Admin SDK with your Google credentials. It needs Node.js 18 or later.
+
+```bash
+gcloud auth application-default login   # or: export GOOGLE_APPLICATION_CREDENTIALS=/path/outside/the/repo/key.json
+cd tool/seed
+npm install
+node seed.mjs --dry-run                 # validates perfumes.json, writes nothing
+node seed.mjs                           # writes to the project in .firebaserc
+node seed.mjs --project <your-project>  # or to another project
+```
+
+Running it again overwrites the same documents, so it is safe to repeat. Never put the service-account key inside the repository.
 
 ### 3. Run
 

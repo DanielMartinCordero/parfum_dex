@@ -1,1 +1,25 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"parfumdex","appId":"1:328422734733:android:c04d55903f8ed189b59bc4","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"parfumdex","configurations":{"android":"1:328422734733:android:c04d55903f8ed189b59bc4","web":"1:328422734733:web:7c5fd7833d6e7115b59bc4"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "parfumdex",
+          "appId": "1:328422734733:android:c04d55903f8ed189b59bc4",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "parfumdex",
+          "configurations": {
+            "android": "1:328422734733:android:c04d55903f8ed189b59bc4",
+            "web": "1:328422734733:web:7c5fd7833d6e7115b59bc4"
+          }
+        }
+      }
+    }
+  }
+}
