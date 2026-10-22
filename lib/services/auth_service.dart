@@ -35,7 +35,7 @@ class AuthService {
         await user.updateDisplayName(displayName);
 
         // CREACIÓN EN FIRESTORE (El documento completo del perfil)
-        await _usersService.createUserProfile(
+        await _usersService.claimUsername(
           uid: user.uid,
           email: email,
           displayName: displayName,
