@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../routes/app_routes.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
+import '../widgets/google_sign_in_button.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -89,6 +90,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
+  // 6. Registro con Google: no usa el formulario, el nombre lo pone Google
+  Future<void> _handleGoogle() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final errorMessage = await _authService.signInWithGoogle();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+      );
+    } else {
+      context.go(AppRoutes.explore);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -171,6 +195,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         onPressed: _handleRegister,
                         child: const Text("Registrarse"),
                       ),
+
+                const SizedBox(height: 12),
+                GoogleSignInButton(
+                  onPressed: _isLoading ? null : _handleGoogle,
+                ),
 
                 const SizedBox(height: 4),
                 TextButton(

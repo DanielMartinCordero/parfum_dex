@@ -4,6 +4,7 @@ import 'package:parfum_dex/routes/app_routes.dart';
 
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
+import '../widgets/google_sign_in_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -62,6 +63,29 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleGoogle() async {
+    setState(() {
+      _loadingIcon = true;
+    });
+
+    // Esperamos a que termine TODO: la ventana de Google + ensureProfile
+    final errorMessage = await AuthService().signInWithGoogle();
+
+    if (!mounted) return;
+
+    setState(() {
+      _loadingIcon = false;
+    });
+
+    if (errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+      );
+    } else {
+      context.go(AppRoutes.explore);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,6 +141,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(fontSize: 16),
                         ),
                       ),
+                const SizedBox(height: 12.0),
+                // Deshabilitado mientras carga para evitar dos ventanas de Google
+                GoogleSignInButton(
+                  onPressed: _loadingIcon ? null : _handleGoogle,
+                ),
                 const SizedBox(height: 12.0),
                 TextButton(
                   onPressed: () {
