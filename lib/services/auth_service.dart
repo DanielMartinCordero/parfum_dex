@@ -82,6 +82,46 @@ class AuthService {
     }
   }
 
+  // 7. Método para entrar con GOOGLE (sirve tanto para registro como para login)
+  Future<String?> signInWithGoogle() async {
+    try {
+      final provider = GoogleAuthProvider();
+      // Obliga a elegir cuenta aunque solo haya una sesión de Google abierta
+      provider.setCustomParameters({'prompt': 'select_account'});
+
+      // Web: ventana emergente. Android: pestaña del navegador (Custom Tab).
+      final UserCredential userCredential = kIsWeb
+          ? await _auth.signInWithPopup(provider)
+          : await _auth.signInWithProvider(provider);
+
+      final user = userCredential.user;
+      if (user != null) {
+        await _usersService.ensureProfile(user);
+      }
+
+      return null; // Éxito, sin error
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Error de Firebase Auth (Google): ${e.code}');
+
+      if (e.code == 'popup-closed-by-user' ||
+          e.code == 'cancelled-popup-request' ||
+          e.code == 'web-context-canceled') {
+        return 'Inicio de sesión con Google cancelado.';
+      } else if (e.code == 'popup-blocked') {
+        return 'El navegador ha bloqueado la ventana emergente.';
+      } else if (e.code == 'account-exists-with-different-credential') {
+        return 'Ya existe una cuenta con este correo usando otro método.';
+      }
+      return 'Error al iniciar sesión con Google: ${e.message}';
+    } catch (e) {
+      // Si Auth fue bien pero el perfil falló, cerramos sesión para no
+      // dejar entrar a la app a un usuario sin perfil.
+      debugPrint('Excepción en login con Google: $e');
+      await _auth.signOut();
+      return 'No se pudo crear tu perfil. Inténtalo de nuevo.';
+    }
+  }
+
   // 6. Método para CERRAR SESIÓN
   Future<void> signOut() async {
     await _auth.signOut();
