@@ -103,4 +103,21 @@ class UsersService {
       rethrow;
     }
   }
+
+  // 8. Garantiza que el usuario tenga perfil en Firestore.
+  //    Si ya existe no hace nada; si no, lo crea reservando un username.
+  Future<void> ensureProfile(User user) async {
+    final doc = await _usersRef.doc(user.uid).get();
+    if (doc.exists) return;
+
+    final email = user.email ?? '';
+
+    // Nombre de Google -> parte del email antes de la @ -> 'user' (lo pone el generador)
+    final googleName = user.displayName?.trim();
+    final name = (googleName == null || googleName.isEmpty)
+        ? email.split('@').first
+        : googleName;
+
+    await claimUsername(uid: user.uid, email: email, displayName: name);
+  }
 }
