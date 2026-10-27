@@ -92,11 +92,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // 6. Registro con Google: no usa el formulario, el nombre lo pone Google
   Future<void> _handleGoogle() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    final errorMessage = await _authService.signInWithGoogle();
+    // El spinner solo aparece cuando ya ha elegido cuenta (ver login_screen)
+    final result = await _authService.signInWithGoogle(
+      onAccountChosen: () {
+        if (mounted) {
+          setState(() {
+            _isLoading = true;
+          });
+        }
+      },
+    );
 
     if (!mounted) return;
 
@@ -104,12 +109,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = false;
     });
 
-    if (errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
-      );
-    } else {
-      context.go(AppRoutes.explore);
+    switch (result.status) {
+      case GoogleSignInStatus.success:
+        context.go(AppRoutes.explore);
+      case GoogleSignInStatus.cancelled:
+        break; // El usuario ya sabe que lo canceló: no mostramos nada
+      case GoogleSignInStatus.error:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.errorMessage!),
+            backgroundColor: Colors.red,
+          ),
+        );
     }
   }
 

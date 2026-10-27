@@ -1,0 +1,1 @@
+pruebas de minusculas/mayusculas explore-screen (no funccionaba, tocó refinar la lógica)
