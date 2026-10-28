@@ -5,8 +5,35 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
+
+    // Índice de usernames: el ID del documento ES el handle, así que dos
+    // usuarios no pueden reservar el mismo. Solo se escribe (no se lee) desde
+    // la app, y un create sobre un documento que ya existe cuenta como update,
+    // que está denegado: eso es lo que garantiza la unicidad.
+    match /usernames/{handle} {
+      allow create: if request.auth != null
+        && handle.matches('^[a-z0-9]{3,30}$')
+        && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+      allow update: if false;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Solo se puede crear el perfil si, en el mismo batch, se reserva el
+      // handle a nombre del mismo usuario (getAfter mira el estado final).
+      allow create: if request.auth != null && request.auth.uid == userId
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == request.auth.uid;
+
+      // El username no se puede modificar editando el perfil a mano.
+      allow update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.username == resource.data.username;
+
+      allow delete: if request.auth != null && request.auth.uid == userId;
+
       match /vault/{itemId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
