@@ -13,6 +13,7 @@ Built with **Flutter** and **Firebase** (Authentication + Cloud Firestore). Runs
 - Personal vault: add perfumes from the detail screen; the list updates in real time. Free tier limited to 5 perfumes.
 - Profile: view and edit your display name, sign out.
 - Route guard: private screens redirect to login when there is no session.
+- Google sign-in: Authentication with Google in Android and Web
 
 Planned (see [ROADMAP.md](ROADMAP.md)): remaining-volume calculator from scale tare data, retail price comparison, edit/delete of vault items, an AI-assisted advisor.
 
