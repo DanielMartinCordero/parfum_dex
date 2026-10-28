@@ -64,12 +64,17 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleGoogle() async {
-    setState(() {
-      _loadingIcon = true;
-    });
-
-    // Esperamos a que termine TODO: la ventana de Google + ensureProfile
-    final errorMessage = await AuthService().signInWithGoogle();
+    // No activamos el spinner aún: mientras la ventana de Google está abierta
+    // el botón sigue libre. Solo cuando elige cuenta empieza la carga.
+    final result = await AuthService().signInWithGoogle(
+      onAccountChosen: () {
+        if (mounted) {
+          setState(() {
+            _loadingIcon = true;
+          });
+        }
+      },
+    );
 
     if (!mounted) return;
 
@@ -77,12 +82,18 @@ class _LoginScreenState extends State<LoginScreen> {
       _loadingIcon = false;
     });
 
-    if (errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
-      );
-    } else {
-      context.go(AppRoutes.explore);
+    switch (result.status) {
+      case GoogleSignInStatus.success:
+        context.go(AppRoutes.explore);
+      case GoogleSignInStatus.cancelled:
+        break; // El usuario ya sabe que lo canceló: no mostramos nada
+      case GoogleSignInStatus.error:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.errorMessage!),
+            backgroundColor: Colors.red,
+          ),
+        );
     }
   }
 
