@@ -21,7 +21,7 @@ class VaultCardFront extends StatelessWidget {
     return Center(
       child: SizedBox(
         width: 500,
-        height: 240,
+        height: 260,
         child: Card(
           margin: EdgeInsets.zero,
           elevation: 8,
