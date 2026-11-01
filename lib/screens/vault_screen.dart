@@ -5,7 +5,10 @@ import '../routes/app_routes.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import '../models/vault_item.dart';
 import '../services/vault_service.dart';
+import '../widgets/vault_card/flip_card.dart';
 import '../widgets/vault_card/vault_card_front.dart';
+import '../widgets/vault_card/vault_card_back.dart';
+
 
 class VaultScreen extends StatefulWidget {
   const VaultScreen({super.key});
@@ -178,16 +181,19 @@ class _VaultScreenState extends State<VaultScreen> {
         ),
         Expanded(
           child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             itemCount: _vaultItems.length,
             separatorBuilder: (context, index) => const SizedBox(height: 20),
             itemBuilder: (context, index) {
               final item = _vaultItems[index];
-              return VaultCardFront(
-                item: item,
-                onTap: () {
-                  debugPrint("Tocado: ${item.name}");
-                },
+              return FlipCard(
+                  key: ValueKey(item.id),
+                  width: 500,
+                  height: 260,
+                  borderRadius: 24,
+                  edgeColor: Colors.amber.shade200,
+                  front: VaultCardFront(item:item),
+                  back: VaultCardBack(item:item)
               );
             },
           ),
