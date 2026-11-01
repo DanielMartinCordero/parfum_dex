@@ -31,8 +31,15 @@ class Perfume {
 
   bool get canBeWeighed => tareInfo != null;
 
-  /// Calcula los mililitros restantes basándose en el peso total en gramos.
-  /// Retorna `null` si este perfume no tiene datos de tara.
+  // Hasta 3 notas sin repetir, priorizando las de corazón.
+  List<String> get mainNotes => <String>{
+    ...?notes['heart'],
+    ...?notes['top'],
+    ...?notes['base'],
+  }.take(3).toList();
+
+  // Calcula los mililitros restantes basándose en el peso total en gramos.
+  // Retorna `null` si este perfume no tiene datos de tara.
   double? calculateRemainingMl(double totalWeightGrams) {
     if (tareInfo == null) return null;
 
