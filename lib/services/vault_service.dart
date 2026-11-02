@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/perfume.dart';
 import '../models/vault_item.dart';
+import '../utils/validators.dart';
 
 class VaultService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -70,5 +71,53 @@ class VaultService {
       rethrow;
     }
 
+  }
+
+  // Guarda los atributos que puede editar el usuario. Recibe los valores finales
+  // de los tres campos: un precio o una valoración en null borra ese dato.
+  // Devuelve true si ha guardado algo y false si no había nada que cambiar.
+  Future<bool> updateVaultItem(
+    VaultItem item, {
+    required double remainingMl,
+    double? purchasePrice,
+    double? rating,
+  }) async {
+    // Comprobamos en local antes de gastar una escritura en Firestore
+    final String? error =
+        Validators.validateRemainingMl(remainingMl, item.capacityMl) ??
+        Validators.validatePurchasePrice(purchasePrice) ??
+        Validators.validateRating(rating);
+    if (error != null) {
+      throw Exception(error);
+    }
+    if (remainingMl == item.remainingMl &&
+        purchasePrice == item.purchasePrice &&
+        rating == item.rating) {
+      print("No hay valores diferetes a los actuales");
+      return false;
+    }
+    try {
+      // update() solo toca estos campos, el resto del documento se queda igual
+      await _userVaultRef.doc(item.id).update({
+        'remainingMl': remainingMl,
+        'purchasePrice': purchasePrice,
+        'rating': rating,
+      });
+      print("Perfume actualizado con éxito");
+      return true;
+    } catch (e) {
+      print('Error al actualizar el perfume: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> removeFromVault(String itemId) async {
+    try {
+      await _userVaultRef.doc(itemId).delete();
+      print("Perfume eliminado con éxito");
+    } catch (e) {
+      print('Error al eliminar el perfume: $e');
+      rethrow;
+    }
   }
 }
