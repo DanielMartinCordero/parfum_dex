@@ -140,20 +140,18 @@ An end-to-end multiplatform ecosystem tailored for fragrance collectors and enth
 * Store map under each perfume: a "Show nearby stores" button asks for location permission and shows branches of the retail chains listed in the perfume's `prices`. Stock is never claimed.
 * `tiendas` collection: 20-30 branches of the main retail chains in one province, loaded by script. Neighbourhood perfumeries are out of scope.
 
-### Week 1 · Oct 21-27: Google & Vault
+### Week 1 · Oct 21-27: Google Sign In
 
-- [ ] Google Sign-In on Android and web (SHA-1 / SHA-256, cancellation and error states, profile created or recovered)
-- [ ] README: SHA fingerprints, OAuth client and files that are not committed
-- [ ] Edit and add vault item attributes with `update`, delete with confirmation and error state
-- [ ] Auth and Firestore emulators behind `--dart-define=USE_EMULATORS=true`
-- [ ] `CLAUDE.md` with architecture and project conventions
+- [x] Google Sign-In on Android and web (SHA-1 / SHA-256, cancellation and error states, profile created or recovered)
+- [x] README: SHA fingerprints, OAuth client and files that are not committed
 
 ### Week 2 · Oct 28 - Nov 3: Card, Queries & Photo
 
-- [ ] Card redesign (time-boxed to 2 sessions)
+- [x] Card redesign (time-boxed to 2 sessions)
+- [x] Edit and add vault item attributes with `update`, delete with confirmation and error state
 - [ ] Catalogue of 20+ perfumes with a date field; four queries (two `where` conditions, `orderBy` + `limit`, date range, `startAfterDocument` pagination); index in `firestore.indexes.json`
 - [ ] README: snapshot vs one-off `get` per screen, and why
-- [ ] Bottle photo from camera and gallery, permissions and denial handled
+- [ ] Profile photo from camera and gallery, permissions and denial handled
 - [ ] Compression in an isolate with progress; thumbnail under 300 KB as base64 in the document
 
 ### Week 3 · Nov 4-10: Stores & Map
@@ -167,6 +165,7 @@ An end-to-end multiplatform ecosystem tailored for fragrance collectors and enth
 
 ### Week 4 · Nov 11-13: Release
 
+- [ ] Firebase and Auth emulators created
 - [ ] Exported test data importable with one command
 - [ ] `flutter build web` and Firebase Hosting deployment, public URL in the README
 - [ ] Test matrix for Android and web (permissions denied, GPS off, offline)
