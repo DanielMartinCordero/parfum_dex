@@ -6,8 +6,10 @@ import 'package:material_symbols_icons/symbols.dart';
 import '../models/vault_item.dart';
 import '../services/vault_service.dart';
 import '../widgets/vault_card/flip_card.dart';
+import '../widgets/vault_card/vault_card_edit_overlay.dart';
 import '../widgets/vault_card/vault_card_front.dart';
 import '../widgets/vault_card/vault_card_back.dart';
+import '../widgets/vault_card/vault_edit_sheet.dart';
 
 
 class VaultScreen extends StatefulWidget {
@@ -26,6 +28,8 @@ class _VaultScreenState extends State<VaultScreen> {
   List<VaultItem> _vaultItems = [];
   bool _isLoading = true;
   String? _errorMessage;
+  // Activado desde el botón "Editar armario"
+  bool _isEditing = false;
 
   @override
   void initState() {
@@ -49,6 +53,8 @@ class _VaultScreenState extends State<VaultScreen> {
         setState(() {
           _vaultItems = items;
           _isLoading = false;
+          // Sin perfumes no hay nada que editar
+          if (items.isEmpty) _isEditing = false;
         });
       },
       onError: (error) {
@@ -65,9 +71,49 @@ class _VaultScreenState extends State<VaultScreen> {
   void dispose() {
     //Cancelamos la suscripción activa al destruir la pantalla
     _vaultSubscription?.cancel();
-    print("vault_suscription cancelada");
     super.dispose();
-    print("screen destruida");
+  }
+
+  Future<void> _confirmDelete(VaultItem item) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Eliminar perfume'),
+        content: Text('¿Quieres quitar ${item.name} de tu armario?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    try {
+      await _vaultService.removeFromVault(item.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${item.name} eliminado de tu armario'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ha ocurrido un error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -152,29 +198,57 @@ class _VaultScreenState extends State<VaultScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Mi Armario (${_vaultItems.length}/${VaultService.freeLimit})',
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              ElevatedButton.icon(
-                onPressed: isFull ? null : () => context.go(AppRoutes.explore),
-                icon: Icon(
-                  isFull ? Icons.block : Icons.add,
-                  color: isFull ? Colors.white : null,
-                ),
-                label: Text(
-                  isFull ? 'Límite alcanzado' : 'Añadir perfume',
-                  style: TextStyle(color: isFull ? Colors.white : null),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isFull ? Colors.red.shade400 : null,
-                  disabledBackgroundColor: isFull ? Colors.red.shade400 : null,
-                  foregroundColor: Colors.white,
-                  disabledForegroundColor: Colors.white,
-                ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: isFull ? null : () => context.go(AppRoutes.explore),
+                      icon: Icon(
+                        isFull ? Icons.block : Icons.add,
+                        color: isFull ? Colors.white : null,
+                      ),
+                      // FittedBox encoge el texto si el botón no le deja sitio
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          isFull ? 'Límite alcanzado' : 'Añadir perfume',
+                          style: TextStyle(color: isFull ? Colors.white : null),
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        backgroundColor: isFull ? Colors.red.shade400 : null,
+                        disabledBackgroundColor: isFull ? Colors.red.shade400 : null,
+                        foregroundColor: Colors.white,
+                        disabledForegroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => setState(() => _isEditing = !_isEditing),
+                      icon: Icon(_isEditing ? Icons.check : Icons.edit),
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(_isEditing ? 'Hecho' : 'Editar armario'),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        backgroundColor: Colors.deepPurple.shade50,
+                        foregroundColor: Colors.deepPurple,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -193,7 +267,14 @@ class _VaultScreenState extends State<VaultScreen> {
                   borderRadius: 24,
                   edgeColor: Colors.amber.shade200,
                   front: VaultCardFront(item:item),
-                  back: VaultCardBack(item:item)
+                  back: VaultCardBack(item:item),
+                  overlay: _isEditing
+                      ? VaultCardEditOverlay(
+                          borderRadius: 24,
+                          onEdit: () => VaultEditSheet.show(context, item),
+                          onDelete: () => _confirmDelete(item),
+                        )
+                      : null,
               );
             },
           ),
