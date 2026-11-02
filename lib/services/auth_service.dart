@@ -180,7 +180,7 @@ class AuthService {
 
   // 7.1 WEB: Firebase abre la ventana emergente de Google por su cuenta
   Future<UserCredential> _signInWithGooglePopup(
-    VoidCallback? onAccountChosen,
+    VoidCallback? onAccountChosen
   ) async {
     final provider = GoogleAuthProvider();
     // Obliga a elegir cuenta aunque solo haya una sesión de Google abierta
