@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-// Cuánto crece el lado cercano al girar: 0.4 = un 20 % por cada lado
-const double _perspectiveStrength = 0.4;
+// Cuánto crece el lado cercano al girar: 0.3 = un 15 % por cada lado
+const double _perspectiveStrength = 0.3;
 
 class FlipCard extends StatefulWidget {
   final Widget front;
@@ -11,6 +11,8 @@ class FlipCard extends StatefulWidget {
   final double height;
   final double borderRadius;
   final Color edgeColor;
+  // Capa opcional encima de la tarjeta, por ejemplo la del modo edición
+  final Widget? overlay;
 
   const FlipCard({
     super.key,
@@ -20,6 +22,7 @@ class FlipCard extends StatefulWidget {
     required this.height,
     required this.borderRadius,
     required this.edgeColor,
+    this.overlay,
   });
 
   @override
@@ -66,66 +69,78 @@ class _FlipCardState extends State<FlipCard>
       child: SizedBox(
         width: widget.width,
         height: widget.height,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // Depende del ancho real para que el giro se vea igual en móvil y PC
-            final double perspective = _perspectiveStrength / constraints.maxWidth;
-
-            return GestureDetector(
-              onTap: _toggle,
-              child: AnimatedBuilder(
-                animation: _animation,
-                builder: (context, child) {
-                  final double progress = _animation.value;
-                  final double angle = progress * math.pi;
-                  // A mitad del giro la tarjeta está de canto: ahí cambiamos de cara
-                  final bool frontVisible = progress < 0.5;
-                  // Alejamos la tarjeta al girar para que su borde cercano nunca
-                  // sea más alto que ella y no invada lo que tiene alrededor
-                  final double pullBack =
-                      1 / (1 + _perspectiveStrength / 2 * math.sin(angle));
-
-                  return Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      if (progress > 0 && progress < 1)
-                        _buildEdge(widget.height * pullBack),
-                      Transform(
-                        alignment: Alignment.center,
-                        // setEntry añade la perspectiva, rotateY gira sobre el eje vertical
-                        transform: Matrix4.identity()
-                          ..setEntry(3, 2, perspective)
-                          ..scaleByDouble(pullBack, pullBack, pullBack, 1)
-                          ..rotateY(angle),
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            // Offstage oculta sin destruir: las dos caras siguen cargadas
-                            Offstage(
-                              offstage: !frontVisible,
-                              child: RepaintBoundary(child: widget.front),
-                            ),
-                            Offstage(
-                              offstage: frontVisible,
-                              child: _mirrored(
-                                RepaintBoundary(child: widget.back),
-                              ),
-                            ),
-                            if (progress > 0 && progress < 1)
-                              frontVisible
-                                  ? _buildShine(progress)
-                                  : _mirrored(_buildShine(progress)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            );
-          },
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            _buildFlippingCard(),
+            // Va encima y no gira. Mientras esté puesta, recibe ella los toques
+            if (widget.overlay != null)
+              Positioned.fill(child: widget.overlay!),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFlippingCard() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Depende del ancho real para que el giro se vea igual en móvil y PC
+        final double perspective = _perspectiveStrength / constraints.maxWidth;
+
+        return GestureDetector(
+          onTap: _toggle,
+          child: AnimatedBuilder(
+            animation: _animation,
+            builder: (context, child) {
+              final double progress = _animation.value;
+              final double angle = progress * math.pi;
+              // A mitad del giro la tarjeta está de canto: ahí cambiamos de cara
+              final bool frontVisible = progress < 0.5;
+              // Alejamos la tarjeta al girar para que su borde cercano nunca
+              // sea más alto que ella y no invada lo que tiene alrededor
+              final double pullBack =
+                  1 / (1 + _perspectiveStrength / 2 * math.sin(angle));
+
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  if (progress > 0 && progress < 1)
+                    _buildEdge(widget.height * pullBack),
+                  Transform(
+                    alignment: Alignment.center,
+                    // setEntry añade la perspectiva, rotateY gira sobre el eje vertical
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, perspective)
+                      ..scaleByDouble(pullBack, pullBack, pullBack, 1)
+                      ..rotateY(angle),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Offstage oculta sin destruir: las dos caras siguen cargadas
+                        Offstage(
+                          offstage: !frontVisible,
+                          child: RepaintBoundary(child: widget.front),
+                        ),
+                        Offstage(
+                          offstage: frontVisible,
+                          child: _mirrored(
+                            RepaintBoundary(child: widget.back),
+                          ),
+                        ),
+                        if (progress > 0 && progress < 1)
+                          frontVisible
+                              ? _buildShine(progress)
+                              : _mirrored(_buildShine(progress)),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
