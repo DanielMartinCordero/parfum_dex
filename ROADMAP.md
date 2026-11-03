@@ -149,7 +149,7 @@ An end-to-end multiplatform ecosystem tailored for fragrance collectors and enth
 
 - [x] Card redesign (time-boxed to 2 sessions)
 - [x] Edit and add vault item attributes with `update`, delete with confirmation and error state
-- [ ] Catalogue of 20+ perfumes with a date field; four queries (two `where` conditions, `orderBy` + `limit`, date range, `startAfterDocument` pagination); index in `firestore.indexes.json`
+- [x] Catalogue of 20+ perfumes with a date field; four queries (two `where` conditions, `orderBy` + `limit`, date range, `startAfterDocument` pagination); index in `firestore.indexes.json`
 - [ ] README: snapshot vs one-off `get` per screen, and why
 - [ ] Profile photo from camera and gallery, permissions and denial handled
 - [ ] Compression in an isolate with progress; thumbnail under 300 KB as base64 in the document

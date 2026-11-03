@@ -23,13 +23,17 @@ Planned (see [ROADMAP.md](ROADMAP.md)): remaining-volume calculator from scale t
 lib/
   main.dart            Firebase + preferences init, MaterialApp.router
   routes/              app_routes.dart: route table, constants, redirect guard
-  models/              Perfume, RetailOffer, TareInfo, UserProfile, VaultItem
+  models/              Perfume, CatalogEntry, RetailOffer, TareInfo,
+                       UserProfile, VaultItem
   services/            auth_service, users_service, perfumes_service,
-                       vault_service, preferences_service
+                       catalog_search_service, vault_service,
+                       preferences_service
   screens/             splash, onboarding, login, register, home_shell,
                        explore (catalog), perfume_detail, vault, profile
   widgets/             perfume_card, vault_item_card, search_bar_widget
-  utils/               validators.dart (pure functions, no Flutter or Firebase)
+  utils/               validators.dart, search_normalizer.dart
+                       (pure functions, no Flutter or Firebase)
+tools/seeder/          Node script that bulk-loads the catalog into Firestore
 ```
 
 **Why it is split this way.** Each layer has one job, so a change in one place does not ripple through the rest:
@@ -46,7 +50,9 @@ lib/
 - **Typed Firestore access.** Every service creates its collection reference once with `withConverter`, using the model's `fromFirestore` / `toFirestore` (`Perfume`, `UserProfile`, `VaultItem`). The app works with objects, not raw maps.
 - **go_router.** It declares the whole route table in one place, supports URLs with parameters on web (`/explore/detail/:id`), and expresses the auth guard as a single `redirect` function. It is maintained by the Flutter team. The three tabs use `StatefulShellRoute`, which keeps each tab alive when switching.
 - **`go` instead of `push` for the detail.** On web, `push` does not update the browser URL, so reloading would lose the screen. The detail is a nested route under the catalog, so the back button still returns to it.
+- **Search over a single index document.** Firestore cannot search text inside a field, so the catalog screen downloads `catalog/searchIndex` once per session (1 read), a summary of every perfume (`CatalogEntry`), and searches it in memory. `CatalogSearchService` is a singleton, so the index stays loaded across screens. Results are ranked: name starts with the query, then word prefixes, then substrings, then notes. The full perfume is read only when its detail opens.
 - **Catalog uses a one-off `Future`; the vault uses a `Stream`.** Catalog data rarely changes, so reading once saves reads. The vault changes from another screen (the detail), so it listens with a manual subscription that is cancelled in `dispose()`.
+- **Wide-screen catalog (provisional).** From 900 px wide, the catalog shows a left panel reserved for future filters (notes, genre, season), and cards up to 220×320 px in at most 6 columns, centered with empty strips at the sides. Fewer cards on screen also keeps web scrolling smooth (see Known limitations). This logic lives in `explore_screen.dart` for now; the planned redesign will move layout decisions to one shared place.
 - **Errors are not swallowed in the vault checks.** If the duplicate or limit check cannot run (offline, permissions), nothing is added and the user sees an error.
 
 ## Data model
@@ -54,6 +60,7 @@ lib/
 | Path | Contents | Access (see `firestore.rules`) |
 |---|---|---|
 | `perfumes/{id}` | Catalog entry | Read: anyone. Write: nobody from the client. |
+| `catalog/searchIndex` | Search index: `items` with id, brand, name, image, genre and notes of every perfume | Read: anyone. Write: nobody from the client (the seeder uses the Admin SDK). |
 | `users/{uid}` | Profile (email, display name, created at, ...) | Owner only. |
 | `users/{uid}/vault/{itemId}` | One owned bottle | Owner only. |
 
@@ -102,7 +109,7 @@ Choose one:
   2. Install the FlutterFire CLI and run `flutterfire configure --platforms=android,web`.
      When asked for the Android package name, use `com.parfumdex.parfum_dex`, or change `applicationId` in `android/app/build.gradle.kts` to match the one you register.
   3. Publish the rules in `firestore.rules` (Firebase console > Firestore > Rules, or `firebase deploy --only firestore:rules`).
-  4. Create a few documents in `perfumes` following the data model above. The catalog is read-only for clients, so add them from the console.
+  4. Load the catalog with the seeder in `tools/seeder` (`npm install`, then `npm run dry-run` and `npm run seed`). It needs a service-account key at `tools/seeder/serviceAccountKey.json` and a perfumes JSON file (default `data/perfumes_demo.json`, or pass `--data <file>`); both are git-ignored, and the demo dataset is not in the repo. It writes both `perfumes` and `catalog/searchIndex`. The catalog screen lists what is in the index, so perfumes added by hand in the console do not appear there.
 
 ### 3. Run
 
@@ -143,7 +150,8 @@ flutter analyze
 - Display names are not unique.
 - If creating the profile document fails right after sign-up, the account exists without a profile and the profile screen shows an error.
 - The 5-perfume free limit is only enforced in the client.
-- Catalog images are external URLs; some may be unavailable, and on web a third-party host can fail because of CORS.
+- Catalog images are external URLs; some may be unavailable. Their host does not allow CORS, so on web each image is drawn as an HTML `<img>` element, which makes scrolling heavy when many are on screen. Hosting the images ourselves with CORS would remove this.
+- Web debug mode is much slower than release; judge scrolling with `flutter run -d chrome --release`.
 - iOS is not configured.
 
 ## License
