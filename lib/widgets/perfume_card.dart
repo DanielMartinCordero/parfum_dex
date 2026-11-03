@@ -10,10 +10,14 @@ import '../models/catalog_entry.dart';
 class PerfumeCard extends StatelessWidget {
   final CatalogEntry entry;
 
-  const PerfumeCard({super.key, required this.entry});
+  // true en pantallas grandes (PC): textos y márgenes más grandes
+  final bool large;
+
+  const PerfumeCard({super.key, required this.entry, this.large = false});
 
   @override
   Widget build(BuildContext context) {
+    final double padding = large ? 12 : 8;
     return Card(
       elevation: 0,
       margin: EdgeInsets.zero,
@@ -36,7 +40,7 @@ class PerfumeCard extends StatelessWidget {
               flex: 5,
               child: Container(
                 color: Colors.white,
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+                padding: EdgeInsets.fromLTRB(padding, padding, padding, 4),
                 child: Hero(
                   tag: 'perfume-${entry.id}', // Usamos el ID único
                   child: Image.network(
@@ -66,11 +70,11 @@ class PerfumeCard extends StatelessWidget {
               ),
             ),
 
-            // Datos
+            // Datos (en grande la imagen gana más espacio: 5/7 en vez de 5/9)
             Expanded(
-              flex: 4,
+              flex: large ? 2 : 4,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                padding: EdgeInsets.fromLTRB(padding, 4, padding, padding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -79,7 +83,7 @@ class PerfumeCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: large ? 12 : 10,
                         letterSpacing: 0.3,
                         fontWeight: FontWeight.w600,
                         color: Colors.grey.shade600,
@@ -88,10 +92,11 @@ class PerfumeCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       entry.name,
-                      maxLines: 3,
+                      // La tarjeta grande es más ancha: con 2 líneas basta
+                      maxLines: large ? 2 : 3,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: TextStyle(
+                        fontSize: large ? 15 : 12,
                         height: 1.15,
                         fontWeight: FontWeight.w700,
                       ),
