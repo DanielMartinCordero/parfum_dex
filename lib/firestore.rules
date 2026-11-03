@@ -6,6 +6,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Índice del catálogo para el buscador (catalog/searchIndex). Solo lo
+    // escribe el seeder, que usa firebase-admin y no pasa por estas reglas.
+    match /catalog/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Índice de usernames: el ID del documento ES el handle, así que dos
     // usuarios no pueden reservar el mismo. Solo se escribe (no se lee) desde
     // la app, y un create sobre un documento que ya existe cuenta como update,

@@ -80,3 +80,8 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# --- Seeder de Firestore ---
+# Datos de la demo (sacados de Fragrantica) y dependencias de Node
+/data/
+tools/seeder/node_modules/
