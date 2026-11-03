@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../models/perfume.dart';
-import '../services/perfumes_service.dart';
+import '../models/catalog_entry.dart';
+import '../services/catalog_search_service.dart';
 import '../widgets/perfume_card.dart';
 import '../widgets/search_bar_widget.dart';
 
@@ -13,8 +13,8 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
-  final PerfumesService _perfumesService = PerfumesService();
-  late Future<List<Perfume>> _perfumesFuture;
+  final CatalogSearchService _catalogService = CatalogSearchService.instance;
+  late Future<List<CatalogEntry>> _catalogFuture;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
@@ -24,8 +24,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void initState() {
     super.initState();
-    _perfumesFuture = _perfumesService.getPerfumes();
-    print("-------------Perfumes obtenidos para mostrar en catálogo-------------");
+    // La primera vez descarga el índice (1 lectura); después ya está en memoria
+    _catalogFuture = _catalogService.load();
     _searchFocusNode.addListener(() {
       setState(() {
         _isFocused = _searchFocusNode.hasFocus;
@@ -48,9 +48,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
     });
   }
 
-  void _reloadPerfumes() {
+  void _reloadCatalog() {
     setState(() {
-      _perfumesFuture = _perfumesService.getPerfumes();
+      _catalogFuture = _catalogService.load();
     });
   }
 
@@ -70,15 +70,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
               isFocused: _isFocused,
               searchQuery: _searchQuery,
               onChanged: (value) {
+                // El servicio ya normaliza (minúsculas, tildes...): aquí solo
+                // quitamos los espacios de los extremos para el mensaje
                 setState(() {
-                  _searchQuery = value.toLowerCase().trim();
+                  _searchQuery = value.trim();
                 });
               },
               onClear: _clearSearch,
             ),
             Expanded(
-              child: FutureBuilder<List<Perfume>>(
-                future: _perfumesFuture,
+              child: FutureBuilder<List<CatalogEntry>>(
+                future: _catalogFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -97,7 +99,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           const Text('Error al cargar los perfumes.'),
                           const SizedBox(height: 12),
                           ElevatedButton(
-                            onPressed: _reloadPerfumes,
+                            onPressed: _reloadCatalog,
                             child: const Text('Reintentar'),
                           ),
                         ],
@@ -105,24 +107,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     );
                   }
 
-                  final allPerfumes = snapshot.data ?? [];
-                  final filteredPerfumes = _searchQuery.isEmpty
-                      ? allPerfumes
-                      : allPerfumes.where((perfume) {
-                          final matchesName = perfume.name
-                              .toLowerCase()
-                              .contains(_searchQuery);
-                          final matchesBrand = perfume.brand
-                              .toLowerCase()
-                              .contains(_searchQuery);
-                          final matchesNotes = perfume.notes.values.any(
-                            (list) => list.any(
-                              (note) =>
-                                  note.toLowerCase().contains(_searchQuery),
-                            ),
-                          );
-                          return matchesName || matchesBrand || matchesNotes;
-                        }).toList();
+                  // Búsqueda en memoria: no gasta lecturas y tarda menos de
+                  // un milisegundo, así que se hace en cada pulsación
+                  final filteredPerfumes = _catalogService.search(_searchQuery);
 
                   if (filteredPerfumes.isEmpty) {
                     return Center(
@@ -150,10 +137,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           crossAxisSpacing: 8,
                           mainAxisSpacing: 8,
                         ),
+                    // GridView.builder solo construye las tarjetas visibles,
+                    // así que pasarle los 993 no cuesta nada
                     itemCount: filteredPerfumes.length,
                     itemBuilder: (context, index) {
-                      final perfume = filteredPerfumes[index];
-                      return PerfumeCard(perfume: perfume);
+                      return PerfumeCard(entry: filteredPerfumes[index]);
                     },
                   );
                 },

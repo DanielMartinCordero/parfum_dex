@@ -58,6 +58,8 @@ class VaultCardFront extends StatelessWidget {
                       child: Image.network(
                         item.imageUrl,
                         fit: BoxFit.contain,
+                        // En web, sin cabeceras CORS se pinta como <img> normal
+                        webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                         errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.image_not_supported_outlined,
                           color: Colors.grey.shade400,
