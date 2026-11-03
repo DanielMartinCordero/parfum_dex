@@ -4,6 +4,7 @@
 class Validators {
   static const double maxPurchasePrice = 2000;
   static const double maxRating = 5;
+  static const int maxCapacityMl = 1000;
 
   /// Valida que el correo no esté vacío y tenga un formato válido.
   static String? validateEmail(String? value) {
@@ -50,6 +51,18 @@ class Validators {
     }
     if (value != originalPassword) {
       return 'Las contraseñas no coinciden';
+    }
+    return null;
+  }
+
+  /// Valida la capacidad del bote. Es opcional: null significa "sin capacidad".
+  static String? validateCapacityMl(int? value) {
+    if (value == null) return null;
+    if (value <= 0) {
+      return 'La capacidad debe ser mayor que 0';
+    }
+    if (value > maxCapacityMl) {
+      return 'La capacidad no puede superar los $maxCapacityMl ml';
     }
     return null;
   }

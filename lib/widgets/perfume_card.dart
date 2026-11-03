@@ -64,7 +64,7 @@ class PerfumeCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (perfume.concentration.isNotEmpty)
+                    if (perfume.concentration != null)
                       Positioned(
                         top: 0,
                         left: 0,
@@ -78,7 +78,7 @@ class PerfumeCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            perfume.concentration,
+                            perfume.concentration!,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 9,
@@ -145,7 +145,8 @@ class PerfumeCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        if (offer != null) //No tiene sentido mostrar una cantidad sin precio
+                        // Sin precio o sin ml conocidos no mostramos la cantidad
+                        if (offer != null && perfume.nominalMl != null)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 5,

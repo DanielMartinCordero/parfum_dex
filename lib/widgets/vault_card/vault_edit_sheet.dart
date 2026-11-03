@@ -35,6 +35,7 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
   final VaultService _vaultService = VaultService();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
+  late final TextEditingController _capacityController;
   late final TextEditingController _remainingController;
   late final TextEditingController _priceController;
 
@@ -46,8 +47,10 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
     super.initState();
     // Rellenamos el formulario con lo que ya tiene la tarjeta
     final VaultItem item = widget.item;
+    _capacityController = TextEditingController();
+    final double? remaining = item.remainingMl ?? item.capacityMl?.toDouble();
     _remainingController = TextEditingController(
-      text: _formatNumber(item.remainingMl ?? item.capacityMl.toDouble()),
+      text: remaining != null ? _formatNumber(remaining) : '',
     );
     _priceController = TextEditingController(
       text: item.purchasePrice != null
@@ -59,6 +62,7 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
 
   @override
   void dispose() {
+    _capacityController.dispose();
     _remainingController.dispose();
     _priceController.dispose();
     super.dispose();
@@ -76,12 +80,37 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
     return double.tryParse((text ?? '').trim().replaceAll(',', '.'));
   }
 
+  // Capacidad del bote: la que ya tenía o la que está escribiendo el usuario.
+  // Devuelve null mientras no haya una capacidad válida.
+  int? get _capacity {
+    final int? saved = widget.item.capacityMl;
+    if (saved != null) return saved;
+    final int? typed = int.tryParse(_capacityController.text.trim());
+    return Validators.validateCapacityMl(typed) == null ? typed : null;
+  }
+
+  String? _validateCapacity(String? value) {
+    // La capacidad es opcional: vacío significa "sigo sin saberla"
+    if (value == null || value.trim().isEmpty) return null;
+
+    final int? capacity = int.tryParse(value.trim());
+    if (capacity == null) {
+      return 'Introduce un número entero';
+    }
+    return Validators.validateCapacityMl(capacity);
+  }
+
   String? _validateRemaining(String? value) {
+    final int? capacity = _capacity;
+    if (capacity == null) return null;
+    // Vacío significa que el bote está lleno
+    if (value == null || value.trim().isEmpty) return null;
+
     final double? remaining = _parseNumber(value);
     if (remaining == null) {
       return 'Introduce un número válido';
     }
-    return Validators.validateRemainingMl(remaining, widget.item.capacityMl);
+    return Validators.validateRemainingMl(remaining, capacity);
   }
 
   String? _validatePrice(String? value) {
@@ -106,11 +135,18 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
       _isSaving = true;
     });
 
+    // Sin capacidad no se guardan ml restantes; con capacidad, vacío es "lleno"
+    final int? capacity = _capacity;
+    final double? remaining = capacity == null
+        ? null
+        : _parseNumber(_remainingController.text) ?? capacity.toDouble();
+
     SnackBar snackBar;
     try {
       final bool hasChanged = await _vaultService.updateVaultItem(
         widget.item,
-        remainingMl: _parseNumber(_remainingController.text)!,
+        capacityMl: capacity,
+        remainingMl: remaining,
         purchasePrice: _parseNumber(_priceController.text),
         rating: _rating,
       );
@@ -152,6 +188,7 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
   @override
   Widget build(BuildContext context) {
     final VaultItem item = widget.item;
+    final int? capacity = _capacity;
 
     return Padding(
       // Deja hueco al teclado para que no tape los campos
@@ -186,25 +223,47 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
               ),
               const SizedBox(height: 24),
 
-              // 1. Mililitros restantes
-              TextFormField(
-                controller: _remainingController,
-                validator: _validateRemaining,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
-                ],
-                decoration: InputDecoration(
-                  labelText: 'Mililitros restantes',
-                  helperText: 'Capacidad del bote: ${item.capacityMl} ml',
-                  suffixText: 'ml',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.water_drop_outlined),
+              // 1. Capacidad: solo se pide si el perfume no la traía del catálogo
+              if (item.capacityMl == null) ...[
+                TextFormField(
+                  controller: _capacityController,
+                  validator: _validateCapacity,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  // Redibujamos para mostrar el campo de ml restantes al escribirla
+                  onChanged: (_) => setState(() {}),
+                  decoration: const InputDecoration(
+                    labelText: 'Capacidad del bote (opcional)',
+                    helperText: 'Añádela para controlar cuánto te queda',
+                    suffixText: 'ml',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.local_drink_outlined),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
+                const SizedBox(height: 16),
+              ],
 
-              // 2. Precio de compra
+              // 2. Mililitros restantes: solo si conocemos la capacidad
+              if (capacity != null) ...[
+                TextFormField(
+                  controller: _remainingController,
+                  validator: _validateRemaining,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                  ],
+                  decoration: InputDecoration(
+                    labelText: 'Mililitros restantes',
+                    helperText: 'Capacidad del bote: $capacity ml. Vacío si está lleno',
+                    suffixText: 'ml',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.water_drop_outlined),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // 3. Precio de compra
               TextFormField(
                 controller: _priceController,
                 validator: _validatePrice,
@@ -221,7 +280,7 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
               ),
               const SizedBox(height: 16),
 
-              // 3. Valoración
+              // 4. Valoración
               const Text(
                 'Valoración',
                 style: TextStyle(fontWeight: FontWeight.w600),

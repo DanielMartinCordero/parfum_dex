@@ -13,6 +13,8 @@ class VaultCardFront extends StatelessWidget {
   Widget build(BuildContext context) {
     // Usamos directamente el fillPercentage (ahora asegurado en el modelo de no ser nulo)
     final double fillPercentage = item.fillPercentage;
+    // Sin capacidad no hay barra de ml (variable local para no usar "!")
+    final int? capacity = item.capacityMl;
     // Color dorado para el borde y la barra
     final Color accentColor = Colors.amber.shade200;
 
@@ -106,33 +108,34 @@ class VaultCardFront extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
-
-              // PISO 2: barra de progreso y ml
-              Row(
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: fillPercentage,
-                        minHeight: 8,
-                        backgroundColor: Colors.white24,
-                        color: accentColor,
+              // PISO 2: barra de progreso y ml (solo si conocemos la capacidad)
+              if (capacity != null) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: fillPercentage,
+                          minHeight: 8,
+                          backgroundColor: Colors.white24,
+                          color: accentColor,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    '${(item.remainingMl ?? item.capacityMl).toStringAsFixed(0)} / ${item.capacityMl} ml',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                    const SizedBox(width: 12),
+                    Text(
+                      '${(item.remainingMl ?? capacity).toStringAsFixed(0)} / $capacity ml',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),

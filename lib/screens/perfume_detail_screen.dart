@@ -177,21 +177,25 @@ class _PerfumeDetailScreenState extends State<PerfumeDetailScreen> {
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Chip(
-                              label: Text(
-                                perfume.concentration,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
+                            if(perfume.concentration != null)
+                              Chip(
+                                label: Text(
+                                  perfume.concentration!,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                backgroundColor: Colors.deepPurple.shade50,
+                                side: BorderSide.none,
                               ),
-                              backgroundColor: Colors.deepPurple.shade50,
-                              side: BorderSide.none,
-                            ),
-                            const SizedBox(width: 8),
-                            Chip(
-                              label: Text('${perfume.nominalMl} ml'),
-                              backgroundColor: Colors.grey.shade100,
-                              side: BorderSide.none,
-                            ),
+                            // Los ml solo se muestran si los conocemos
+                            if (perfume.nominalMl != null) ...[
+                              const SizedBox(width: 8),
+                              Chip(
+                                label: Text('${perfume.nominalMl} ml'),
+                                backgroundColor: Colors.grey.shade100,
+                                side: BorderSide.none,
+                              ),
+                            ],
                           ],
                         ),
                       ],

@@ -7,7 +7,8 @@ class VaultItem {
   final String brand;
   final String name;
   final String imageUrl;
-  final int capacityMl;
+  // null si el perfume no traía los ml y el usuario aún no los ha añadido
+  final int? capacityMl;
   final double?
   remainingMl; //Opcionales para no obligar al usuario a rellenarlos
   final double? purchasePrice;
@@ -27,12 +28,13 @@ class VaultItem {
     required this.addedAt, // Requerido en el constructor
   });
   double get fillPercentage {
+    // Copia local: así Dart sabe que tras comprobarla ya no es null
+    final int? capacity = capacityMl;
+    if (capacity == null) return 0.0;
     // Si por algún error antiguo no hay remainingMl, asumimos que está lleno
-    final double actualRemaining = remainingMl ?? capacityMl.toDouble();
-
-    if (capacityMl <= 0) return 0.0;
+    final double actualRemaining = remainingMl ?? capacity.toDouble();
     // Usamos actualRemaining en lugar de remainingMl! para evitar el fallo de nulos
-    return (actualRemaining / capacityMl).clamp(0.0, 1.0);
+    return (actualRemaining / capacity).clamp(0.0, 1.0);
   }
 
   double? get costPerSpray {
@@ -40,8 +42,11 @@ class VaultItem {
       debugPrint("No se ha definido el precio de compra");
       return null;
     }
-    if (capacityMl <= 0 || purchasePrice! <= 0) return 0.0;
-    final totalSprays = capacityMl * 10;
+    // Sin capacidad no sabemos cuántos sprays tiene el bote
+    final int? capacity = capacityMl;
+    if (capacity == null) return null;
+    if (purchasePrice! <= 0) return 0.0;
+    final totalSprays = capacity * 10;
 
     return purchasePrice! / totalSprays;
   }
@@ -55,14 +60,17 @@ class VaultItem {
       throw Exception('El documento VaultItem no contiene datos.');
     }
 
+    // Parseo defensivo num -> int para prevenir errores de tipo de Firestore.
+    // Un 0 (de datos antiguos) también cuenta como "sin capacidad".
+    final int? capacity = (data['capacityMl'] as num?)?.toInt();
+
     return VaultItem(
       id: snapshot.id,
       perfumeId: data['perfumeId'] as String? ?? '',
       name: data['perfumeName'] as String? ?? 'Perfume sin nombre',
       brand: data['brand'] as String? ?? 'Marca desconocida',
       imageUrl: data['imageUrl'] as String? ?? '',
-      // Parseo defensivo num -> int para prevenir errores de tipo de Firestore
-      capacityMl: (data['capacityMl'] as num?)?.toInt() ?? 0,
+      capacityMl: capacity != null && capacity > 0 ? capacity : null,
       //Comprobación por si viene null
       remainingMl: (data['remainingMl'] as num?)?.toDouble(),
       purchasePrice: (data['purchasePrice'] as num?)?.toDouble(),

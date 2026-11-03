@@ -59,8 +59,9 @@ class VaultService {
         brand: perfume.brand,
         name: perfume.name,
         imageUrl: perfume.imageUrl,
+        // Si el perfume no trae ml, quedan en null hasta que el usuario los añada
         capacityMl: perfume.nominalMl,
-        remainingMl: perfume.nominalMl.toDouble(),
+        remainingMl: perfume.nominalMl?.toDouble(),
         addedAt: DateTime.now(), // Asignamos la fecha exacta de ahora
       );
       await _userVaultRef.add(newPerfume);
@@ -74,23 +75,34 @@ class VaultService {
   }
 
   // Guarda los atributos que puede editar el usuario. Recibe los valores finales
-  // de los tres campos: un precio o una valoración en null borra ese dato.
+  // de los campos: un precio o una valoración en null borra ese dato.
+  // capacityMl solo se usa si el perfume aún no tenía capacidad: la que ya
+  // venía del catálogo no se puede cambiar.
   // Devuelve true si ha guardado algo y false si no había nada que cambiar.
   Future<bool> updateVaultItem(
     VaultItem item, {
-    required double remainingMl,
+    int? capacityMl,
+    double? remainingMl,
     double? purchasePrice,
     double? rating,
   }) async {
+    final int? capacity = item.capacityMl ?? capacityMl;
+    // Sin capacidad no tiene sentido guardar los ml restantes
+    final double? remaining = capacity != null ? remainingMl : null;
+
     // Comprobamos en local antes de gastar una escritura en Firestore
     final String? error =
-        Validators.validateRemainingMl(remainingMl, item.capacityMl) ??
+        Validators.validateCapacityMl(capacity) ??
+        (capacity != null && remaining != null
+            ? Validators.validateRemainingMl(remaining, capacity)
+            : null) ??
         Validators.validatePurchasePrice(purchasePrice) ??
         Validators.validateRating(rating);
     if (error != null) {
       throw Exception(error);
     }
-    if (remainingMl == item.remainingMl &&
+    if (capacity == item.capacityMl &&
+        remaining == item.remainingMl &&
         purchasePrice == item.purchasePrice &&
         rating == item.rating) {
       print("No hay valores diferetes a los actuales");
@@ -99,7 +111,8 @@ class VaultService {
     try {
       // update() solo toca estos campos, el resto del documento se queda igual
       await _userVaultRef.doc(item.id).update({
-        'remainingMl': remainingMl,
+        'capacityMl': capacity,
+        'remainingMl': remaining,
         'purchasePrice': purchasePrice,
         'rating': rating,
       });

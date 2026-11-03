@@ -8,9 +8,10 @@ class Perfume {
   final String id;
   final String brand;
   final String name;
-  final int nominalMl;
-  final String concentration;
+  final int? nominalMl; // null si no conocemos el tamaño del bote
+  final String? concentration;
   final String imageUrl;
+  final String genre;
   final List<String> season;
   final Map<String, List<String>> notes;
   final TareInfo? tareInfo;
@@ -23,6 +24,7 @@ class Perfume {
     required this.nominalMl,
     required this.concentration,
     required this.imageUrl,
+    required this.genre,
     required this.season,
     required this.notes,
     this.tareInfo,
@@ -53,8 +55,11 @@ class Perfume {
     double remainingMl = liquidWeight / tareInfo!.liquidDensity;
 
     // 3. Nos aseguramos de no devolver más ml de los que caben en la botella
-    if (remainingMl > nominalMl) {
-      remainingMl = nominalMl.toDouble();
+    // (solo si conocemos su capacidad). La variable local permite a Dart
+    // saber que dentro del if ya no es null, sin usar "!".
+    final int? capacity = nominalMl;
+    if (capacity != null && remainingMl > capacity) {
+      remainingMl = capacity.toDouble();
     }
 
     // Redondeamos a 1 decimal para que sea más amigable en UI (ej. "45.2 ml")
@@ -112,9 +117,10 @@ class Perfume {
       id: snapshot.id,
       brand: data['brand'] as String? ?? 'Desconocida',
       name: data['name'] as String? ?? 'Desconocido',
-      nominalMl: (data['nominalMl'] as num?)?.toInt() ?? 0,
-      concentration: data['concentration'] as String? ?? '',
+      nominalMl: (data['nominalMl'] as num?)?.toInt(),
+      concentration: data['concentration'] as String?,
       imageUrl: data['imageUrl'] as String? ?? '',
+      genre: data['genre'] as String,
       season: parsedSeasons,
       notes: parsedNotes,
       tareInfo: TareInfo.fromMap(data['tareInfo'] as Map<String, dynamic>?),
@@ -128,6 +134,7 @@ class Perfume {
       'nominalMl': nominalMl,
       'concentration': concentration,
       'imageUrl': imageUrl,
+      'genre': genre,
       'season': season,
       'notes': notes,
       'tareInfo': tareInfo?.toMap(),
