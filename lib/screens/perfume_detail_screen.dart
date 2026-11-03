@@ -142,6 +142,9 @@ class _PerfumeDetailScreenState extends State<PerfumeDetailScreen> {
                       child: Image.network(
                         perfume.imageUrl,
                         fit: BoxFit.contain,
+                        // En web, si el servidor de la imagen no permite CORS,
+                        // la pinta como una etiqueta <img> normal
+                        webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                         errorBuilder: (_, __, ___) => Icon(
                           Icons.image_not_supported_outlined,
                           color: Colors.grey.shade400,

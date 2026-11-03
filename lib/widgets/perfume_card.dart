@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../routes/app_routes.dart'; // Añadimos el import de AppRoutes
 
-import '../models/perfume.dart';
+import '../models/catalog_entry.dart';
 
-/// Tarjeta vertical del catálogo: imagen, marca, nombre, precio y mililitros.
+/// Tarjeta vertical del catálogo: imagen, marca y nombre.
+/// Se pinta con la entrada ligera del índice; precios, concentración y ml
+/// se ven en el detalle, que lee el perfume completo.
 class PerfumeCard extends StatelessWidget {
-  final Perfume perfume;
+  final CatalogEntry entry;
 
-  const PerfumeCard({super.key, required this.perfume});
+  const PerfumeCard({super.key, required this.entry});
 
   @override
   Widget build(BuildContext context) {
-    final offer = perfume.bestOffer;
-
     return Card(
       elevation: 0,
       margin: EdgeInsets.zero,
@@ -23,10 +23,10 @@ class PerfumeCard extends StatelessWidget {
         side: BorderSide(color: Colors.grey.shade200),
       ),
       child: InkWell(
-        // Al tocar, navegamos usando el ID en la URL y el objeto en memoria
+        // Al tocar, navegamos solo con el ID: el detalle lee el perfume completo
         onTap: () {
           // Usamos interpolación de strings para construir la ruta dinámicamente
-          context.go('${AppRoutes.explore}/detail/${perfume.id}', extra: perfume);
+          context.go('${AppRoutes.explore}/detail/${entry.id}');
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -37,57 +37,31 @@ class PerfumeCard extends StatelessWidget {
               child: Container(
                 color: Colors.white,
                 padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Hero(
-                        tag: 'perfume-${perfume.id}', // Usamos el ID único
-                        child: Image.network(
-                          perfume.imageUrl,
-                          fit: BoxFit.contain,
-                          loadingBuilder: (context, child, progress) {
-                            if (progress == null) return child;
-                            return const Center(
-                              child: SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            );
-                          },
-                          errorBuilder: (_, __, ___) => Icon(
-                            Icons.image_not_supported_outlined,
-                            color: Colors.grey.shade400,
+                child: Hero(
+                  tag: 'perfume-${entry.id}', // Usamos el ID único
+                  child: Image.network(
+                    entry.imageUrl,
+                    fit: BoxFit.contain,
+                    // En web, si el servidor de la imagen no permite CORS,
+                    // la pinta como una etiqueta <img> normal
+                    webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+                    loadingBuilder: (context, child, progress) {
+                      if (progress == null) return child;
+                      return const Center(
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
                           ),
                         ),
-                      ),
+                      );
+                    },
+                    errorBuilder: (_, _, _) => Icon(
+                      Icons.image_not_supported_outlined,
+                      color: Colors.grey.shade400,
                     ),
-                    if (perfume.concentration != null)
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 5,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.deepPurple.withValues(alpha: 0.9),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            perfume.concentration!,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -101,7 +75,7 @@ class PerfumeCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      perfume.brand.toUpperCase(),
+                      entry.brand.toUpperCase(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -113,60 +87,14 @@ class PerfumeCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      perfume.name,
-                      maxLines: 2,
+                      entry.name,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 12,
                         height: 1.15,
                         fontWeight: FontWeight.w700,
                       ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            offer != null
-                                ? '${offer.price.toStringAsFixed(0)} €'
-                                : 'Ver opciones',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: offer != null ? 14 : 11,
-                              fontWeight: offer != null
-                                  ? FontWeight.w800
-                                  : FontWeight.w500,
-                              color: offer != null
-                                  ? Colors.deepPurple
-                                  : Colors.grey.shade500,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        // Sin precio o sin ml conocidos no mostramos la cantidad
-                        if (offer != null && perfume.nominalMl != null)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.deepPurple.withValues(alpha: 0.9),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                '${perfume.nominalMl} ml',
-                                maxLines: 1,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                      ],
                     ),
                   ],
                 ),
