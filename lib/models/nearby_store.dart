@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
 
 /// Una perfumería devuelta por la búsqueda de "Perfumerías cerca de ti".
@@ -11,8 +12,8 @@ class NearbyStore {
   final String? address;
   final String? postalCode;
   final String? city;
-  final double lat;
-  final double lng;
+  // Mismo tipo que el campo `location` del documento en Firestore.
+  final GeoPoint location;
   final double distanceKm;
   final String? phone;
   // Horario semanal: 7 listas (lunes a domingo) con tramos "HH:MM-HH:MM".
@@ -22,8 +23,7 @@ class NearbyStore {
   const NearbyStore({
     required this.id,
     required this.chain,
-    required this.lat,
-    required this.lng,
+    required this.location,
     required this.distanceKm,
     this.address,
     this.postalCode,
@@ -32,7 +32,8 @@ class NearbyStore {
     this.weeklyHours,
   });
 
-  LatLng get point => LatLng(lat, lng);
+  // flutter_map trabaja con LatLng, así que lo convertimos para el marcador.
+  LatLng get point => LatLng(location.latitude, location.longitude);
 
   /// "28013 Madrid", "Madrid" o null.
   String? get locality {
@@ -48,8 +49,12 @@ class NearbyStore {
       address: map['address'] as String?,
       postalCode: map['postalCode'] as String?,
       city: map['city'] as String?,
-      lat: (map['lat'] as num).toDouble(),
-      lng: (map['lng'] as num).toDouble(),
+      // La respuesta de la función es JSON y no puede llevar un GeoPoint,
+      // así que viaja como lat/lng y aquí lo reconstruimos.
+      location: GeoPoint(
+        (map['lat'] as num).toDouble(),
+        (map['lng'] as num).toDouble(),
+      ),
       distanceKm: (map['distanceKm'] as num).toDouble(),
       phone: map['phone'] as String?,
       weeklyHours: hours
@@ -69,9 +74,17 @@ class NearbyStoresResult {
   final List<NearbyStore> stores;
   final LatLng userPosition;
 
+  // Cuándo se hizo la búsqueda: para el "Actualizado hace 5 min" y para que
+  // la caché caduque.
+  final Timestamp searchedAt;
+
   const NearbyStoresResult({
     required this.radiusKm,
     required this.stores,
     required this.userPosition,
+    required this.searchedAt,
   });
+
+  /// Tiempo transcurrido desde la búsqueda.
+  Duration get age => DateTime.now().difference(searchedAt.toDate());
 }
