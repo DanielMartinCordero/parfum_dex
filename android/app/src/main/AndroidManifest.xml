@@ -1,4 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Red para Firebase y las teselas del mapa (en debug ya la añade
+         Flutter, pero en release hay que declararla). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Ubicación aproximada para "Perfumerías cerca de ti": para radios de
+         varios km no hace falta la precisa. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
     <application
         android:label="parfum_dex"
         android:name="${applicationName}"
@@ -40,6 +47,15 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- url_launcher: "Cómo llegar", web y teléfono de las tiendas -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.DIAL"/>
+            <data android:scheme="tel"/>
         </intent>
     </queries>
 </manifest>
