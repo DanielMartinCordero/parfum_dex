@@ -243,6 +243,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 itemCount: filteredPerfumes.length,
                 itemBuilder: (context, index) {
                   return PerfumeCard(
+                    key: ValueKey(filteredPerfumes[index].id),
                     entry: filteredPerfumes[index],
                     large: isWide,
                   );
