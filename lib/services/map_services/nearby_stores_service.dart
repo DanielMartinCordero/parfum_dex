@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../dev/fake_stores_repository.dart';
-import '../models/nearby_store.dart';
+import '../../dev/fake_stores_repository.dart';
+import '../../models/nearby_store.dart';
 
 /// Origen de las tiendas cercanas. La implementación real será la Cloud
 /// Function `nearbyStores`; mientras no esté desplegada se usa
