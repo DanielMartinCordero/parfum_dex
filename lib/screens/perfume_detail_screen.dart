@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/perfume.dart';
 import '../services/perfumes_service.dart';
 import '../services/vault_service.dart';
+import '../widgets/nearby_stores/blurred_map_placeholder.dart';
 
 class PerfumeDetailScreen extends StatefulWidget {
   final String perfumeId;
@@ -307,7 +308,40 @@ class _PerfumeDetailScreenState extends State<PerfumeDetailScreen> {
                       ),
                     ],
                   const Divider(height: 32),
-                  
+
+                  // 6. Perfumerías cerca de ti (provisional: el botón aún no
+                  // hace nada; lo conectará NearbyStoresSection)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Text(
+                      "Perfumerías cerca de ti",
+                      style: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: SizedBox(
+                      height: 220,
+                      width: double.infinity,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: BlurredMapPlaceholder(
+                          child: FilledButton.icon(
+                            onPressed: () {},
+                            icon: const Icon(Icons.location_on_outlined),
+                            label: const Text(
+                              'Ver perfumerías cercanas',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
                   // Botón centrado, sin ocupar todo el ancho, con márgenes de seguridad por abajo
                   SafeArea(
                     child: Padding(
@@ -322,8 +356,8 @@ class _PerfumeDetailScreenState extends State<PerfumeDetailScreen> {
                             // Cambia el icono por un progreso si está cargando
                             icon: _isAdding
                                 ? const SizedBox(
-                                    width: 20, 
-                                    height: 20, 
+                                    width: 20,
+                                    height: 20,
                                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                                   )
                                 : const Icon(Icons.add_box),
