@@ -31,10 +31,24 @@ class LocationService {
   const LocationService();
 
   /// Ubicación aproximada: para radios de varios km basta y es más rápida.
-  static const _settings = LocationSettings(
-    accuracy: LocationAccuracy.low,
-    timeLimit: Duration(seconds: 15),
-  );
+  static LocationSettings get _settings {
+    if (kIsWeb) {
+      // En web, requestPermission() ya obtiene una posición para que salga
+      // el aviso del navegador. maximumAge deja reutilizarla (o cualquier
+      // otra de los últimos 5 min) en vez de pedir otra desde cero.
+      // Sin timeLimit: geolocator_web lo pasa en microsegundos en lugar de
+      // milisegundos, así que 15 s se convertirían en unas 4 horas.
+      return WebSettings(
+        accuracy: LocationAccuracy.low,
+        maximumAge: const Duration(minutes: 5),
+      );
+    } else {
+      return const LocationSettings(
+        accuracy: LocationAccuracy.low,
+        timeLimit: Duration(seconds: 15),
+      );
+    }
+  }
 
   Future<LatLng> getCurrentPosition() async {
     if (!await Geolocator.isLocationServiceEnabled()) {

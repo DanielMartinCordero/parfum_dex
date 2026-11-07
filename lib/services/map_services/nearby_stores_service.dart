@@ -18,13 +18,11 @@ abstract interface class StoresRepository {
 /// abrir otro perfume no vuelve a pedir la ubicación ni a consultar nada.
 /// Solo [search] (el botón de recargar) repite la búsqueda.
 class NearbyStoresService {
-  NearbyStoresService._(this._repository);
-
   // Cuando la Cloud Function esté desplegada, aquí irá el repositorio real.
   static final StoresRepository _defaultRepository = FakeStoresRepository();
 
   // La única instancia del servicio (singleton): así todas las fichas de
-  // perfume comparten la misma caché.
+  // la pantalla perfume_details comparten la misma caché.
   static final NearbyStoresService instance = NearbyStoresService._(_defaultRepository);
 
   /// Pasado este tiempo el resultado se descarta: el usuario puede haberse
@@ -34,6 +32,9 @@ class NearbyStoresService {
   final StoresRepository _repository;
 
   NearbyStoresResult? _cached;
+
+  //Constructor
+  NearbyStoresService._(this._repository);
 
   /// Último resultado de la sesión, o null si aún no se ha buscado o si ya
   /// ha caducado.
