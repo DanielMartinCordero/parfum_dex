@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:parfum_dex/widgets/nearby_stores/store_details_sheet.dart';
 
 import '../../models/nearby_store.dart';
 import '../../services/map_services/location_service.dart';
@@ -88,11 +89,9 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
     }
   }
 
-  // Provisional: lo sustituirá la ficha de la tienda (bottom sheet).
+  // Abre la ficha de la tienda seleccionada
   void _openStore(NearbyStore store) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(store.chain)),
-    );
+    showStoreDetailsSheet(context, store);
   }
 
   @override
