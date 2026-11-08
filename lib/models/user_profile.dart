@@ -11,6 +11,12 @@ class UserProfile {
   final int? birthYear;
   final String? scentPreference;
 
+  // Zona aproximada (redondeada a ~1 km) de la última búsqueda de
+  // perfumerías cercanas, y cuándo se hizo. Sirve para volver a buscar
+  // cuando el dispositivo no consigue dar su posición. null si nunca se buscó.
+  final GeoPoint? lastSearchLocation;
+  final DateTime? lastSearchAt;
+
   const UserProfile({
     required this.uid,
     required this.email,
@@ -21,6 +27,8 @@ class UserProfile {
     this.genre,
     this.birthYear,
     this.scentPreference,
+    this.lastSearchLocation,
+    this.lastSearchAt,
   });
 
   // Deserialización tipada para Cloud Firestore
@@ -44,6 +52,9 @@ class UserProfile {
       genre: data['genre'] as String?,
       birthYear: data['birthYear'] as int?,
       scentPreference: data['scentPreference'] as String?,
+      // Firestore devuelve el GeoPoint ya tipado: solo hay que hacer el cast.
+      lastSearchLocation: data['lastSearchLocation'] as GeoPoint?,
+      lastSearchAt: (data['lastSearchAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -58,6 +69,8 @@ class UserProfile {
       if (genre != null) 'genre': genre,
       if (birthYear != null) 'birthYear': birthYear,
       if (scentPreference != null) 'scentPreference': scentPreference,
+      if (lastSearchLocation != null) 'lastSearchLocation': lastSearchLocation,
+      if (lastSearchAt != null) 'lastSearchAt': Timestamp.fromDate(lastSearchAt!),
     };
   }
 
@@ -72,6 +85,8 @@ class UserProfile {
     String? genre,
     int? birthYear,
     String? scentPreference,
+    GeoPoint? lastSearchLocation,
+    DateTime? lastSearchAt,
   }) {
     return UserProfile(
       uid: uid ?? this.uid,
@@ -83,6 +98,8 @@ class UserProfile {
       genre: genre ?? this.genre,
       birthYear: birthYear ?? this.birthYear,
       scentPreference: scentPreference ?? this.scentPreference,
+      lastSearchLocation: lastSearchLocation ?? this.lastSearchLocation,
+      lastSearchAt: lastSearchAt ?? this.lastSearchAt,
     );
   }
 }
