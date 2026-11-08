@@ -120,4 +120,49 @@ class UsersService {
 
     await claimUsername(uid: user.uid, email: email, displayName: name);
   }
+
+  // 9. Guarda en el perfil la zona de la última búsqueda de perfumerías.
+  //    Se redondea a 2 decimales (~1 km): basta para buscar tiendas cercanas
+  //    y no deja en Firestore la posición exacta del usuario.
+  //    [area] es el nombre de la zona ("Madrid"), si se conoce.
+  Future<void> saveLastSearchLocation(
+    double latitude,
+    double longitude, {
+    String? area,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return; // Sin sesión no hay perfil donde guardarla
+
+    final zone = GeoPoint(_roundToZone(latitude), _roundToZone(longitude));
+
+    // update() solo toca estos campos; el resto del perfil no cambia.
+    // Si esta vez no hay nombre de zona, se borra el de la búsqueda anterior
+    // para que no se quede uno que ya no corresponde.
+    await _usersRef.doc(user.uid).update({
+      'lastSearchLocation': zone,
+      'lastSearchAt': Timestamp.now(),
+      'lastSearchArea': area ?? FieldValue.delete(),
+    });
+  }
+
+  // 10. Borra la zona guardada (botón del perfil).
+  //     FieldValue.delete() elimina el campo del documento, no lo pone a null.
+  Future<void> deleteLastSearchLocation() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    await _usersRef.doc(user.uid).update({
+      'lastSearchLocation': FieldValue.delete(),
+      'lastSearchAt': FieldValue.delete(),
+      'lastSearchArea': FieldValue.delete(),
+    });
+  }
+
+  // Redondea una coordenada a 2 decimales para evitar guardar localizaciones exactas.
+  double _roundToZone(double value) {
+    value = value * 100;
+    int intValue = value.round();
+    value = intValue / 100;
+    return value;
+  }
 }
