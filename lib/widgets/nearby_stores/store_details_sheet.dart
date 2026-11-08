@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/map_config.dart';
 import '../../models/nearby_store.dart';
+import '../../utils/distance_format.dart';
 
 /// Abre la ficha de [store] como una hoja que sube desde abajo.
 Future<void> showStoreDetailsSheet(BuildContext context, NearbyStore store) {
@@ -37,14 +38,6 @@ String _formatSlots(List<String> slots) {
   return slots.join(', ');
 }
 
-/// 0,63 km → "630 m"; 3,24 km → "3,2 km".
-String _formatDistance(double km) {
-  if (km < 1) {
-    final meters = (km * 1000 / 10).round() * 10; // redondeo a decenas
-    return '$meters m';
-  }
-  return '${km.toStringAsFixed(1).replaceAll('.', ',')} km';
-}
 
 /// Convierte una hora "HH:MM" en minutos desde medianoche.
 int _toMinutes(String hhmm) {
@@ -126,7 +119,7 @@ class StoreDetailsSheet extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  "A ${_formatDistance(store.distanceKm)}",
+                  "A ${formatDistance(store.distanceKm)}",
                   style: TextStyle(
                     color: Colors.deepPurple,
                     fontWeight: FontWeight.w600,

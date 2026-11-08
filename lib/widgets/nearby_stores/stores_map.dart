@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/map_config.dart';
 import '../../models/nearby_store.dart';
@@ -26,10 +25,14 @@ class StoresMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Puntos que tienen que quedar a la vista al abrir el mapa.
+    // Puntos que tienen que quedar a la vista al abrir el mapa. Por cada
+    // tienda se añade también su "reflejo" respecto al usuario: el punto a la
+    // misma distancia pero en sentido contrario. Así el conjunto es simétrico
+    // alrededor del usuario y el encuadre lo deja justo en el centro.
     final visiblePoints = <LatLng>[result.userPosition];
     for (final store in result.stores) {
       visiblePoints.add(store.point);
+      visiblePoints.add(_mirror(store.point, result.userPosition));
     }
 
     // El punto del usuario va primero para que las tiendas se pinten encima.
@@ -84,18 +87,23 @@ class StoresMap extends StatelessWidget {
           maxZoom: MapConfig.maxZoom,
         ),
         MarkerLayer(markers: markers),
-        RichAttributionWidget(
-          showFlutterMapAttribution: false,
-          attributions: [
-            TextSourceAttribution(
-              MapConfig.attributionText, // se muestra como "© colaboradores…"
-              onTap: () => launchUrl(Uri.parse(MapConfig.attributionUrl)),
-            ),
-          ],
-        ),
+        // La atribución a OpenStreetMap no va aquí: la pinta la sección justo
+        // debajo del mapa, siempre visible.
       ],
     );
   }
+}
+
+/// Reflejo de [point] respecto a [center]: el punto que queda a la misma
+/// distancia de [center] pero en el lado opuesto.
+///
+/// Ejemplo: usuario en (40, -3) y tienda en (40.01, -2.98) → reflejo en
+/// (39.99, -3.02). La tienda se separa +0.01 y +0.02 del centro; el reflejo,
+/// lo mismo pero hacia el otro lado.
+LatLng _mirror(LatLng point, LatLng center) {
+  final dLat = point.latitude - center.latitude;
+  final dLng = point.longitude - center.longitude;
+  return LatLng(center.latitude - dLat, center.longitude - dLng);
 }
 
 /// Círculo morado con el número de la tienda.
