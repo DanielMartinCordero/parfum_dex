@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../models/perfume.dart';
 import '../services/perfumes_service.dart';
 import '../services/vault_service.dart';
-import '../widgets/nearby_stores/blurred_map_placeholder.dart';
 import '../widgets/nearby_stores/nearby_stores_section.dart';
 
 class PerfumeDetailScreen extends StatefulWidget {

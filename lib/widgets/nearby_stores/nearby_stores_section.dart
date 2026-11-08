@@ -1,11 +1,20 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
-import 'package:parfum_dex/widgets/nearby_stores/store_details_sheet.dart';
+import 'dart:async' show unawaited;
 
+import 'package:cloud_firestore/cloud_firestore.dart' show GeoPoint;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
+import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:parfum_dex/widgets/nearby_stores/store_details_sheet.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../config/map_config.dart';
 import '../../models/nearby_store.dart';
+import '../../services/map_services/distance_ranking/distance_ranking.dart';
 import '../../services/map_services/location_service.dart';
 import '../../services/map_services/nearby_stores_service.dart';
+import '../../services/users_service.dart';
 import 'blurred_map_placeholder.dart';
+import 'nearby_stores_list.dart';
 import 'stores_map.dart';
 
 /// En qué punto está la sección.
@@ -32,6 +41,7 @@ class NearbyStoresSection extends StatefulWidget {
 class _NearbyStoresSectionState extends State<NearbyStoresSection> {
   static const _locationService = LocationService();
   final NearbyStoresService _storesService = NearbyStoresService.instance;
+  final UsersService _usersService = UsersService();
 
   _Status _status = _Status.idle;
   NearbyStoresResult? _result;
@@ -39,6 +49,16 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
   // Por qué falló la ubicación. Si el estado es error y esto es null, el
   // fallo fue de red (la búsqueda de tiendas), no de ubicación.
   LocationFailure? _failure;
+
+  // Zona de la última búsqueda guardada en el perfil. Solo se lee del
+  // perfil cuando falla la ubicación, para ofrecerla como alternativa.
+  GeoPoint? _savedZone;
+  DateTime? _savedZoneAt;
+
+  // Lista "cerca de ti": tiendas ordenadas por distancia (null mientras se
+  // calcula) y progreso del cálculo, de 0 a 1.
+  List<RankedStore>? _ranked;
+  double? _rankingProgress;
 
   @override
   void initState() {
@@ -49,6 +69,56 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
     if (cached != null) {
       _result = cached;
       _status = _statusFor(cached);
+      _startRanking(cached);
+    }
+  }
+
+  /// Prepara la lista y lanza el cálculo de distancias sin esperarlo.
+  /// Se llama dentro de un setState (o en initState), así que solo cambia
+  /// campos: los setState los hace _rankStores cuando hay novedades.
+  void _startRanking(NearbyStoresResult result) {
+    _ranked = null;
+    _rankingProgress = 0;
+    unawaited(_rankStores(result));
+  }
+
+  /// Ordena las tiendas por distancia al usuario (en un isolate en Android)
+  /// y va actualizando la barra de progreso.
+  Future<void> _rankStores(NearbyStoresResult result) async {
+    try {
+      final ranking = await rankByDistance(
+        result.userPosition,
+        result.stores,
+        onProgress: (progress) {
+          // Si mientras tanto llegó otra búsqueda, este progreso ya no vale.
+          if (!mounted || _result != result) return;
+          setState(() {
+            _rankingProgress = progress;
+          });
+        },
+      );
+
+      final where = ranking.usedIsolate ? 'isolate' : 'hilo principal';
+      debugPrint('${result.stores.length} tiendas ordenadas en '
+          '${ranking.elapsed.inMicroseconds} µs ($where)');
+
+      if (!mounted || _result != result) return;
+      setState(() {
+        _ranked = ranking.stores;
+        _rankingProgress = null;
+      });
+    } catch (e) {
+      debugPrint('No se pudieron ordenar las tiendas: $e');
+      if (!mounted || _result != result) return;
+      // Plan B: el orden y las distancias que ya calculó el servidor.
+      final fallback = <RankedStore>[];
+      for (final store in result.stores) {
+        fallback.add((store: store, distanceKm: store.distanceKm));
+      }
+      setState(() {
+        _ranked = fallback;
+        _rankingProgress = null;
+      });
     }
   }
 
@@ -59,26 +129,61 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
     return _Status.loaded;
   }
 
+  /// Busca alrededor de la posición actual del dispositivo.
   Future<void> _search() async {
     setState(() {
       _status = _Status.loading;
       _failure = null;
     });
 
+    final LatLng position;
     try {
-      final position = await _locationService.getCurrentPosition();
-      final result = await _storesService.search(position);
+      position = await _locationService.getCurrentPosition();
+    } on LocationException catch (e) {
+      // Sin posición: miramos si el perfil guarda una zona que ofrecer.
+      final profile = await _usersService.getCurrentUserProfile();
       // Mientras esperábamos, el usuario pudo salir de la pantalla.
+      if (!mounted) return;
+      setState(() {
+        _failure = e.failure;
+        _savedZone = profile?.lastSearchLocation;
+        _savedZoneAt = profile?.lastSearchAt;
+        _status = _Status.error;
+      });
+      return;
+    }
+
+    await _searchAt(position, saveZone: true);
+  }
+
+  /// Busca alrededor de la zona guardada en el perfil.
+  Future<void> _searchSavedZone() async {
+    final zone = _savedZone;
+    if (zone == null) return;
+
+    setState(() {
+      _status = _Status.loading;
+      _failure = null;
+    });
+    // saveZone: false → no se vuelve a guardar la misma zona con fecha nueva,
+    // como si el usuario hubiera estado allí ahora.
+    await _searchAt(LatLng(zone.latitude, zone.longitude), saveZone: false);
+  }
+
+  /// Busca tiendas alrededor de [position] y, si [saveZone], guarda la zona
+  /// en el perfil.
+  Future<void> _searchAt(LatLng position, {required bool saveZone}) async {
+    try {
+      final result = await _storesService.search(position);
+      if (saveZone) {
+        // unawaited: no esperamos a que se guarde para enseñar el mapa.
+        unawaited(_saveZone(position, result));
+      }
       if (!mounted) return;
       setState(() {
         _result = result;
         _status = _statusFor(result);
-      });
-    } on LocationException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _failure = e.failure;
-        _status = _Status.error;
+        _startRanking(result);
       });
     } catch (_) {
       if (!mounted) return;
@@ -86,6 +191,23 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
         _failure = null;
         _status = _Status.error;
       });
+    }
+  }
+
+  /// Guarda la zona en el perfil. Si falla (sin sesión, sin red...), la
+  /// búsqueda ya se ha hecho igualmente: solo se registra el error.
+  Future<void> _saveZone(LatLng position, NearbyStoresResult result) async {
+    // Nombre de la zona: la ciudad de la tienda más cercana (la primera, ya
+    // que vienen ordenadas). firstOrNull da null si no hay ninguna tienda.
+    final area = result.stores.firstOrNull?.city;
+    try {
+      await _usersService.saveLastSearchLocation(
+        position.latitude,
+        position.longitude,
+        area: area,
+      );
+    } catch (e) {
+      debugPrint('No se pudo guardar la zona de búsqueda: $e');
     }
   }
 
@@ -130,9 +252,45 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
           ),
           if (hasResult) ...[
             const SizedBox(height: 8),
-            Text(
-              _footerText(_result!),
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            // Pie: datos de la búsqueda a la izquierda y, si se ve el mapa,
+            // la atribución de las teselas a la derecha. Los dos textos
+            // pueden partirse en dos líneas si no caben en un móvil estrecho.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    _footerText(_result!),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ),
+                if (_status == _Status.loaded) ...[
+                  const SizedBox(width: 12),
+                  Expanded( //Expanded para que ocupe el ancho disponible
+                    child: GestureDetector(
+                      onTap: () => launchUrl(Uri.parse(MapConfig.attributionUrl)),
+                      child: Text(
+                        '© ${MapConfig.attributionText}',
+                        textAlign: TextAlign.end,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+          // Lista "cerca de ti", debajo del mapa.
+          if (_status == _Status.loaded) ...[
+            const SizedBox(height: 12),
+            NearbyStoresList(
+              stores: _ranked,
+              progress: _rankingProgress,
+              onStoreTap: _openStore,
             ),
           ],
         ],
@@ -179,6 +337,23 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
 
       case _Status.error:
         final error = _errorInfo();
+        final zoneAt = _savedZoneAt;
+
+        // Falló la ubicación (no la red) y hay zona guardada: se ofrece como
+        // acción principal, y la de siempre pasa a ser la secundaria.
+        if (_failure != null && _savedZone != null && zoneAt != null) {
+          return BlurredMapPlaceholder(
+            child: _Message(
+              text: '${error.message}\n'
+                  '¿Quieres usar tu última zona de búsqueda (${_agoText(zoneAt)})?',
+              actionLabel: 'Usar última zona',
+              onAction: _searchSavedZone,
+              secondaryLabel: error.actionLabel,
+              onSecondary: error.onAction,
+            ),
+          );
+        }
+
         return BlurredMapPlaceholder(
           child: _Message(
             text: error.message,
@@ -186,6 +361,20 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
             onAction: error.onAction,
           ),
         );
+    }
+  }
+
+  /// "hace 5 min", "hace 3 h", "hace 2 días".
+  String _agoText(DateTime at) {
+    final age = DateTime.now().difference(at);
+    if(age.inMinutes < 60){
+      return "hace ${age.inMinutes} min";
+    }
+    else if(age.inHours < 24){
+      return "hace ${age.inHours} h";
+    }
+    else {
+      return "hace ${age.inDays} días";
     }
   }
 
@@ -229,6 +418,13 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
           onAction: _search,
         );
 
+      case LocationFailure.timeout:
+        return (
+          message: 'Tu ubicación está tardando demasiado en llegar.',
+          actionLabel: 'Reintentar',
+          onAction: _search,
+        );
+
       case LocationFailure.unavailable:
         return (
           message: 'No hemos podido obtener tu ubicación.',
@@ -258,22 +454,41 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
   }
 }
 
-/// Mensaje centrado con un botón opcional debajo.
+/// Mensaje centrado con hasta dos botones debajo: uno principal (relleno)
+/// y otro secundario (con borde).
 class _Message extends StatelessWidget {
   final String text;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final String? secondaryLabel;
+  final VoidCallback? onSecondary;
 
-  const _Message({required this.text, this.actionLabel, this.onAction});
+  const _Message({
+    required this.text,
+    this.actionLabel,
+    this.onAction,
+    this.secondaryLabel,
+    this.onSecondary,
+  });
 
   @override
   Widget build(BuildContext context) {
     // Copias locales para que Dart pueda promocionarlas a no-null.
     final label = actionLabel;
     final action = onAction;
+    final secondLabel = secondaryLabel;
+    final secondAction = onSecondary;
+
+    final buttons = <Widget>[];
+    if (label != null && action != null) {
+      buttons.add(FilledButton(onPressed: action, child: Text(label)));
+    }
+    if (secondLabel != null && secondAction != null) {
+      buttons.add(OutlinedButton(onPressed: secondAction, child: Text(secondLabel)));
+    }
 
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -282,9 +497,15 @@ class _Message extends StatelessWidget {
             textAlign: TextAlign.center,
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
-          if (label != null && action != null) ...[
+          if (buttons.isNotEmpty) ...[
             const SizedBox(height: 12),
-            FilledButton(onPressed: action, child: Text(label)),
+            // Wrap: los botones van en fila y, si no caben, bajan a otra línea.
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: buttons,
+            ),
           ],
         ],
       ),
