@@ -1,56 +1,108 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ---------- Ayudantes ----------
+    function signedIn() { return request.auth != null; }
+    function isUser(uid) { return signedIn() && request.auth.uid == uid; }
+
+    // Obliga a que toda consulta de lista lleve .limit(n) con n <= max.
+    function smallList(max) {
+      return request.query.limit != null && request.query.limit <= max;
+    }
+
+    // Campo opcional: si viene y no es null, tiene que cumplir el tipo/rango.
+    function optString(d, key, max) {
+      return !(key in d) || d[key] == null || (d[key] is string && d[key].size() <= max);
+    }
+    function optNumber(d, key, min, max) {
+      return !(key in d) || d[key] == null
+        || (d[key] is number && d[key] >= min && d[key] <= max);
+    }
+
+    // ---------- Catálogo (solo lectura) ----------
     match /perfumes/{perfumeId} {
-      allow read: if true;
+      allow get: if signedIn();
+      // getPerfumes() usa limit 50: más no se puede pedir.
+      allow list: if signedIn() && smallList(50);
       allow write: if false;
     }
 
-    // Índice del catálogo para el buscador (catalog/searchIndex). Solo lo
-    // escribe el seeder, que usa firebase-admin y no pasa por estas reglas.
+    // Índice de búsqueda: solo get del documento, nunca listar.
     match /catalog/{docId} {
-      allow read: if true;
-      allow write: if false;
+      allow get: if signedIn();
+      allow list, write: if false;
     }
 
-    // Índice de usernames: el ID del documento ES el handle, así que dos
-    // usuarios no pueden reservar el mismo. Solo se escribe (no se lee) desde
-    // la app, y un create sobre un documento que ya existe cuenta como update,
-    // que está denegado: eso es lo que garantiza la unicidad.
+    // stores: sin bloque = denegado. Solo la lee la Cloud Function (Admin SDK).
+
+    // ---------- Usernames (sin cambios de lógica) ----------
     match /usernames/{handle} {
-      allow create: if request.auth != null
+      allow create: if signedIn()
         && handle.matches('^[a-z0-9]{3,30}$')
         && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.createdAt == request.time;
       allow update: if false;
-      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
     }
 
-    // Perfumerías (las sube tools/stores/seed_stores.mjs). La app no las lee
-    // directamente: se las pide a la Cloud Function nearbyStores, que como
-    // el seeder usa firebase-admin y no pasa por estas reglas. Así nadie puede
-    // descargarse la colección entera desde un cliente.
-    match /stores/{storeId} {
-      allow read, write: if false;
+    // ---------- Perfil ----------
+    function validProfile(d) {
+      return d.keys().hasOnly([
+          'email', 'displayName', 'username', 'isPublic', 'createdAt',
+          'genre', 'birthYear', 'scentPreference',
+          'lastSearchLocation', 'lastSearchAt', 'lastSearchArea'])
+        && d.displayName is string && d.displayName.size() <= 50
+        && d.username is string && d.username.matches('^[a-z0-9]{3,30}$')
+        && optString(d, 'email', 254)
+        && (!('isPublic' in d) || d.isPublic is bool)
+        && optString(d, 'genre', 40)
+        && optString(d, 'scentPreference', 40)
+        && optNumber(d, 'birthYear', 1900, 2100)
+        && (!('lastSearchLocation' in d) || d.lastSearchLocation == null
+            || d.lastSearchLocation is latlng)
+        && optString(d, 'lastSearchArea', 100);
     }
 
     match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
+      allow get: if isUser(userId);
+      allow list: if false;
 
-      // Solo se puede crear el perfil si, en el mismo batch, se reserva el
-      // handle a nombre del mismo usuario (getAfter mira el estado final).
-      allow create: if request.auth != null && request.auth.uid == userId
+      // Solo se crea el perfil si, en el mismo batch, se reserva el handle
+      // a nombre del mismo usuario (getAfter mira el estado final).
+      allow create: if isUser(userId)
+        && validProfile(request.resource.data)
         && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == request.auth.uid;
 
-      // El username no se puede modificar editando el perfil a mano.
-      allow update: if request.auth != null && request.auth.uid == userId
+      // El username no se puede cambiar editando el perfil a mano.
+      allow update: if isUser(userId)
+        && validProfile(request.resource.data)
         && request.resource.data.username == resource.data.username;
 
-      allow delete: if request.auth != null && request.auth.uid == userId;
+      allow delete: if isUser(userId);
+
+      // ---------- Armario ----------
+      function validVaultItem(d) {
+        return d.keys().hasOnly([
+            'perfumeId', 'perfumeName', 'brand', 'imageUrl',
+            'capacityMl', 'remainingMl', 'purchasePrice', 'rating', 'addedAt'])
+          && d.perfumeId is string && d.perfumeId.size() <= 100
+          && optString(d, 'perfumeName', 200)
+          && optString(d, 'brand', 100)
+          && optString(d, 'imageUrl', 500)
+          && optNumber(d, 'capacityMl', 1, 1000)       // Validators.maxCapacityMl
+          && optNumber(d, 'remainingMl', 0, 1000)
+          && optNumber(d, 'purchasePrice', 0, 2000)    // Validators.maxPurchasePrice
+          && optNumber(d, 'rating', 0, 5)              // Validators.maxRating
+          && d.addedAt is timestamp;
+      }
 
       match /vault/{itemId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        // Sin smallList: count() no lleva limit. Son datos propios y acotados.
+        allow read: if isUser(userId);
+        allow create, update: if isUser(userId) && validVaultItem(request.resource.data);
+        allow delete: if isUser(userId);
       }
     }
   }

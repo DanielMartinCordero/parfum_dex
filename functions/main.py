@@ -29,6 +29,16 @@ STORES = "stores"
 
 @https_fn.on_call()
 def nearbyStores(req: https_fn.CallableRequest) -> dict:  # noqa: N802 (nombre que usa la app)
+    # Solo usuarios con sesión iniciada. El SDK de la app adjunta el token de
+    # Firebase Auth a cada llamada y firebase-functions lo verifica antes de
+    # llegar aquí: si falta o no es válido, req.auth es None. Así un script
+    # que conozca la URL no puede usar la función (ni generar lecturas).
+    if req.auth is None:
+        raise https_fn.HttpsError(
+            code=https_fn.FunctionsErrorCode.UNAUTHENTICATED,
+            message="Hay que iniciar sesión para buscar perfumerías.",
+        )
+
     center = nearby.parse_center(req.data)
     if center is None:
         raise https_fn.HttpsError(
