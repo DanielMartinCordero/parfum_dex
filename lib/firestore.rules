@@ -27,6 +27,14 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
+    // Perfumerías (las sube tools/stores/seed_stores.mjs). La app no las lee
+    // directamente: se las pide a la Cloud Function nearbyStores, que como
+    // el seeder usa firebase-admin y no pasa por estas reglas. Así nadie puede
+    // descargarse la colección entera desde un cliente.
+    match /stores/{storeId} {
+      allow read, write: if false;
+    }
+
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
 
