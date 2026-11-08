@@ -85,3 +85,10 @@ app.*.map.json
 # Datos de la demo (sacados de Fragrantica) y dependencias de Node
 /data/
 tools/seeder/node_modules/
+tools/stores/node_modules/
+
+# --- Cloud Functions (Python) ---
+# Entorno virtual con las dependencias y bytecode compilado
+functions/venv/
+functions/__pycache__/
+firebase-debug*.log
