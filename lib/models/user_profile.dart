@@ -16,6 +16,9 @@ class UserProfile {
   // cuando el dispositivo no consigue dar su posición. null si nunca se buscó.
   final GeoPoint? lastSearchLocation;
   final DateTime? lastSearchAt;
+  // Ciudad de la tienda más cercana de esa búsqueda ("Madrid"), para poder
+  // decir "cerca de Madrid" sin traducir coordenadas con un servicio externo.
+  final String? lastSearchArea;
 
   const UserProfile({
     required this.uid,
@@ -29,6 +32,7 @@ class UserProfile {
     this.scentPreference,
     this.lastSearchLocation,
     this.lastSearchAt,
+    this.lastSearchArea,
   });
 
   // Deserialización tipada para Cloud Firestore
@@ -55,6 +59,7 @@ class UserProfile {
       // Firestore devuelve el GeoPoint ya tipado: solo hay que hacer el cast.
       lastSearchLocation: data['lastSearchLocation'] as GeoPoint?,
       lastSearchAt: (data['lastSearchAt'] as Timestamp?)?.toDate(),
+      lastSearchArea: data['lastSearchArea'] as String?,
     );
   }
 
@@ -71,6 +76,7 @@ class UserProfile {
       if (scentPreference != null) 'scentPreference': scentPreference,
       if (lastSearchLocation != null) 'lastSearchLocation': lastSearchLocation,
       if (lastSearchAt != null) 'lastSearchAt': Timestamp.fromDate(lastSearchAt!),
+      if (lastSearchArea != null) 'lastSearchArea': lastSearchArea,
     };
   }
 
@@ -87,6 +93,7 @@ class UserProfile {
     String? scentPreference,
     GeoPoint? lastSearchLocation,
     DateTime? lastSearchAt,
+    String? lastSearchArea,
   }) {
     return UserProfile(
       uid: uid ?? this.uid,
@@ -100,6 +107,7 @@ class UserProfile {
       scentPreference: scentPreference ?? this.scentPreference,
       lastSearchLocation: lastSearchLocation ?? this.lastSearchLocation,
       lastSearchAt: lastSearchAt ?? this.lastSearchAt,
+      lastSearchArea: lastSearchArea ?? this.lastSearchArea,
     );
   }
 }
