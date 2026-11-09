@@ -12,5 +12,5 @@
 abstract final class AppCheckConfig {
   /// Clave de sitio de reCAPTCHA Enterprise para la web.
   /// Vacía = App Check no se activa en web (se avisa en consola).
-  static const recaptchaEnterpriseSiteKey = '';
+  static const recaptchaEnterpriseSiteKey = '6Ld3cxguAAAAAMh5TYOqCmWV-cW1DUmX_QU9XkAH';
 }
