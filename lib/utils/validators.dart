@@ -5,6 +5,7 @@ class Validators {
   static const double maxPurchasePrice = 2000;
   static const double maxRating = 5;
   static const int maxCapacityMl = 1000;
+  static const int maxNameLength = 50;
 
   /// Valida que el correo no esté vacío y tenga un formato válido.
   static String? validateEmail(String? value) {
@@ -27,6 +28,10 @@ class Validators {
   static String? validateName(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'El nombre es obligatorio';
+    }
+    // Mismo máximo que comprueban las reglas de Firestore (lib/firestore.rules)
+    if (value.trim().length > maxNameLength) {
+      return 'El nombre no puede superar los $maxNameLength caracteres';
     }
     return null;
   }
