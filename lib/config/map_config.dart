@@ -10,7 +10,7 @@ abstract final class MapConfig {
   static const tileUrlTemplate = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
   /// Identifica la app ante el servidor de teselas (cabecera User-Agent).
-  static const userAgentPackageName = 'com.parfumdex.parfum_dex';
+  static const userAgentPackageName = 'com.perfumedex.app';
 
   static const maxZoom = 19.0;
 

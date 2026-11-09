@@ -26,7 +26,13 @@ initialize_app()
 
 # Madrid: la región más cercana a los usuarios. max_instances pone un techo
 # al número de instancias (y a la factura) si algo empieza a llamar en bucle.
-options.set_global_options(region="europe-southwest1", max_instances=10)
+options.set_global_options(
+    region="europe-southwest1",
+    max_instances=3,
+    timeout_sec = 10,
+    memory=options.MemoryOption.MB_256,
+    min_instances=0
+)
 
 STORES = "stores"
 
@@ -77,7 +83,7 @@ def _stores_within(db, center, radius_km):
     precision, cells = nearby.choose_cells(center, radius_km)
     query = db.collection(STORES).where(
         filter=FieldFilter(f"geohash{precision}", "in", sorted(cells))
-    )
+    ).query.limit(50).stream()
 
     candidates = []
     for doc in query.stream():

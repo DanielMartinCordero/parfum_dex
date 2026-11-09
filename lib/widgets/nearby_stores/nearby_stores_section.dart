@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/map_config.dart';
 import '../../models/nearby_store.dart';
+import '../../models/user_profile.dart';
 import '../../services/map_services/distance_ranking/distance_ranking.dart';
 import '../../services/map_services/location_service.dart';
 import '../../services/map_services/nearby_stores_service.dart';
@@ -141,7 +142,19 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
       position = await _locationService.getCurrentPosition();
     } on LocationException catch (e) {
       // Sin posición: miramos si el perfil guarda una zona que ofrecer.
-      final profile = await _usersService.getCurrentUserProfile();
+      // La variable se declara fuera del try para poder usarla después.
+      UserProfile? profile;
+      try {
+        // Sin red, la lectura del perfil puede tardar bastante en rendirse.
+        // Con el timeout, el mensaje de error sale como mucho en 5 s.
+        profile = await _usersService
+            .getCurrentUserProfile()
+            .timeout(const Duration(seconds: 5));
+      } catch (error) {
+        // Si no se puede leer el perfil, se muestra el error de ubicación
+        // sin ofrecer la zona guardada (profile se queda en null).
+        debugPrint('No se pudo leer la zona guardada: $error');
+      }
       // Mientras esperábamos, el usuario pudo salir de la pantalla.
       if (!mounted) return;
       setState(() {
@@ -367,11 +380,17 @@ class _NearbyStoresSectionState extends State<NearbyStoresSection> {
   /// "hace 5 min", "hace 3 h", "hace 2 días".
   String _agoText(DateTime at) {
     final age = DateTime.now().difference(at);
-    if(age.inMinutes < 60){
+    if (age.inMinutes == 0){
+      return "hace un momento";
+    }
+    else if(age.inMinutes < 60){
       return "hace ${age.inMinutes} min";
     }
     else if(age.inHours < 24){
       return "hace ${age.inHours} h";
+    }
+    else if(age.inDays == 1){
+      return "hace 1 día";
     }
     else {
       return "hace ${age.inDays} días";
