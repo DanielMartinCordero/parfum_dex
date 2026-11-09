@@ -18,6 +18,10 @@ from google.cloud.firestore_v1.base_query import FieldFilter
 
 import nearby
 
+# Firebase solo despliega las funciones que encuentra en main.py: este import
+# es lo que hace que detecte el kill switch de facturación.
+from billing_guard import stopBilling  # noqa: F401
+
 initialize_app()
 
 # Madrid: la región más cercana a los usuarios. max_instances pone un techo
