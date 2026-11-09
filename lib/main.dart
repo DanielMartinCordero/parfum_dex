@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'firebase_options.dart';
 
+import 'package:parfum_dex/services/app_check_service.dart';
 import 'package:parfum_dex/services/preferences_service.dart';
 
 Future<void> main() async {
@@ -13,6 +14,10 @@ Future<void> main() async {
 
   // Inicializamos Firebase con la configuración específica de la plataforma (Web/Android/iOS)
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // App Check: solo la app auténtica puede hablar con Firestore y Functions.
+  // Tiene que ir antes de cualquier lectura de Firestore.
+  await AppCheckService.init();
 
   await PreferencesService.init();
   runApp(const ParfumDexApp());
