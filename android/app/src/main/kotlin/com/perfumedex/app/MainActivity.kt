@@ -1,4 +1,4 @@
-package com.parfumdex.parfum_dex
+package com.perfumedex.app
 
 import io.flutter.embedding.android.FlutterActivity
 
