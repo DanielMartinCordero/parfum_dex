@@ -5,7 +5,7 @@
 *.keystore
 key.properties
 *-firebase-adminsdk-*.json
-serviceAccountKey.json
+serviceAccount*.json
 
 # --- Config de Firebase regenerable ---
 android/app/google-services.json
