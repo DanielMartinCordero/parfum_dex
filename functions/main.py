@@ -24,20 +24,31 @@ from billing_guard import stopBilling  # noqa: F401
 
 initialize_app()
 
-# Madrid: la región más cercana a los usuarios. max_instances pone un techo
-# al número de instancias (y a la factura) si algo empieza a llamar en bucle.
+# Opciones de todas las funciones de este fichero (billing_guard.py usa las
+# suyas propias):
 options.set_global_options(
+    # Madrid: la región más cercana a los usuarios.
     region="europe-southwest1",
+    # Como mucho 3 copias de la función a la vez. Si algo empieza a llamar en
+    # bucle, las peticiones que sobren esperan o fallan en vez de multiplicar
+    # la factura.
     max_instances=3,
-    timeout_sec = 10,
+    # Si una llamada tarda más de 10 s, se corta. Una búsqueda normal tarda
+    # menos de 1 s; esto evita pagar por llamadas atascadas.
+    timeout_sec=10,
+    # Memoria de cada copia. 256 MB sobran para unas decenas de documentos.
     memory=options.MemoryOption.MB_256,
-    min_instances=0
+    # 0 = cuando nadie la usa, se apaga y no cuesta nada. La primera llamada
+    # tras un rato parado tarda un poco más (arranque en frío).
+    min_instances=0,
 )
 
 STORES = "stores"
 
 
-@https_fn.on_call()
+# enforce_app_check: solo atiende peticiones que traen un token de App Check
+# válido, es decir, que vienen de la app de verdad (no de un script).
+@https_fn.on_call(enforce_app_check=True)
 def nearbyStores(req: https_fn.CallableRequest) -> dict:  # noqa: N802 (nombre que usa la app)
     # Solo usuarios con sesión iniciada. El SDK de la app adjunta el token de
     # Firebase Auth a cada llamada y firebase-functions lo verifica antes de
@@ -83,7 +94,7 @@ def _stores_within(db, center, radius_km):
     precision, cells = nearby.choose_cells(center, radius_km)
     query = db.collection(STORES).where(
         filter=FieldFilter(f"geohash{precision}", "in", sorted(cells))
-    ).query.limit(50).stream()
+    )
 
     candidates = []
     for doc in query.stream():
