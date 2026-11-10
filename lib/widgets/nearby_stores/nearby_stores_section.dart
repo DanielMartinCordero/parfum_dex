@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' show GeoPoint;
 import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:parfum_dex/widgets/nearby_stores/store_details_sheet.dart';
+import 'package:perfume_dex/widgets/nearby_stores/store_details_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../config/map_config.dart';

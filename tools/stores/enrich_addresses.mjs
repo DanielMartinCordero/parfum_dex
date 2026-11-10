@@ -29,7 +29,7 @@ if (!inputPath) {
 }
 
 const CACHE_PATH = 'data/nominatim_cache.json';
-const USER_AGENT = 'ParfumDex-store-seeder/1.0 (one-off reverse geocoding of OSM shops)';
+const USER_AGENT = 'PerfumeDex-store-seeder/1.0 (one-off reverse geocoding of OSM shops)';
 const DELAY_MS = 1100;
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });

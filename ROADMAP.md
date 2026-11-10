@@ -1,8 +1,8 @@
-# Product Roadmap: ParfumDex 📱✨
+# Product Roadmap: PerfumeDex 📱✨
 
 | Attribute | Details |
 | --- | --- |
-| **Project** | ParfumDex |
+| **Project** | PerfumeDex |
 | **Platform** | Flutter (Multiplatform: Android / Web) |
 | **Backend & Auth** | Firebase (Auth & Cloud Firestore) |
 | **Current Target** | Milestone 2 (Google Sign-In, vault editing, bottle photos, location & store map) — **Mid November** |

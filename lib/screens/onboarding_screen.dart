@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:parfum_dex/services/preferences_service.dart';
+import 'package:perfume_dex/services/preferences_service.dart';
 
 import '../routes/app_routes.dart';
 

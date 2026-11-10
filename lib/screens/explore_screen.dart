@@ -82,7 +82,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       // Añadimos el AppBar
-      appBar: AppBar(title: const Text("ParfumDex")),
+      appBar: AppBar(title: const Text("PerfumeDex")),
       body: GestureDetector(
         onTap: () => _searchFocusNode.unfocus(),
         behavior: HitTestBehavior.opaque,

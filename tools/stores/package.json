@@ -1,5 +1,5 @@
 {
-  "name": "parfumdex-stores-tools",
+  "name": "perfumedex-stores-tools",
   "private": true,
   "description": "Scripts de un solo uso para preparar y subir las perfumerías a Firestore",
   "type": "module",

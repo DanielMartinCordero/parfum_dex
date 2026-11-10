@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart' show GeoPoint;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_symbols_icons/symbols.dart';
-import 'package:parfum_dex/routes/app_routes.dart';
+import 'package:perfume_dex/routes/app_routes.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../services/map_services/nearby_stores_service.dart';
@@ -153,7 +153,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("ParfumDex"),
+        title: const Text("PerfumeDex"),
       ),
       body: FutureBuilder<UserProfile?>(
         future: _profileFuture,

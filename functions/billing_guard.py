@@ -1,4 +1,4 @@
-"""Corte automático de facturación (kill switch) de ParfumDex.
+"""Corte automático de facturación (kill switch) de PerfumeDex.
 
 Escucha el tema de Pub/Sub `budget-alerts`, donde publican:
   - el presupuesto de Cloud Billing (varias veces al día):
@@ -18,6 +18,7 @@ import os
 from firebase_functions import options, pubsub_fn
 from google.cloud import billing_v1
 
+# "parfumdex" es el ID del proyecto Firebase: es fijo y no cambia con el nombre de la app.
 PROJECT_ID = os.environ.get("GCLOUD_PROJECT", "parfumdex")
 PROJECT_NAME = f"projects/{PROJECT_ID}"
 

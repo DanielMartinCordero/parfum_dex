@@ -1,4 +1,4 @@
-# ParfumDex
+# PerfumeDex
 
 A mobile and web app for fragrance collectors: browse a perfume catalog, keep a personal vault of the bottles you own and (planned) work out how much liquid is left in an opaque bottle from its weight.
 
@@ -134,8 +134,8 @@ The isolate is always slower end to end, because spawning it and copying the lis
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/DanielMartinCordero/parfum_dex.git
-cd parfum_dex
+git clone https://github.com/DanielMartinCordero/perfume_dex.git
+cd perfume_dex
 flutter pub get
 ```
 

@@ -6,8 +6,8 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'firebase_options.dart';
 
-import 'package:parfum_dex/services/app_check_services/app_check_service.dart';
-import 'package:parfum_dex/services/preferences_service.dart';
+import 'package:perfume_dex/services/app_check_services/app_check_service.dart';
+import 'package:perfume_dex/services/preferences_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,16 +20,16 @@ Future<void> main() async {
   await AppCheckService.init();
 
   await PreferencesService.init();
-  runApp(const ParfumDexApp());
+  runApp(const PerfumeDexApp());
 }
 
-class ParfumDexApp extends StatelessWidget {
-  const ParfumDexApp({super.key});
+class PerfumeDexApp extends StatelessWidget {
+  const PerfumeDexApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'ParfumDex',
+      title: 'PerfumeDex',
       debugShowCheckedModeBanner: false, // Quita la banda roja de "DEBUG"
       routerConfig: AppRoutes.appRouter,
       theme: ThemeData(

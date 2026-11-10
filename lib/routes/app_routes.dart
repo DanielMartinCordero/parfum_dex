@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
-import 'package:parfum_dex/screens/explore_screen.dart';
+import 'package:perfume_dex/screens/explore_screen.dart';
 
 import '../screens/profile_screen.dart';
 import '../screens/splash_screen.dart';

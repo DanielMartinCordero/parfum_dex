@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:parfum_dex/routes/app_routes.dart';
+import 'package:perfume_dex/routes/app_routes.dart';
 
 import '../services/auth_service.dart';
 import '../utils/validators.dart';

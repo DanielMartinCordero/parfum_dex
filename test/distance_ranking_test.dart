@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart' show GeoPoint;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:parfum_dex/models/nearby_store.dart';
-import 'package:parfum_dex/services/map_services/distance_ranking/distance_ranking.dart';
-import 'package:parfum_dex/services/map_services/distance_ranking/ranking_core.dart';
+import 'package:perfume_dex/models/nearby_store.dart';
+import 'package:perfume_dex/services/map_services/distance_ranking/distance_ranking.dart';
+import 'package:perfume_dex/services/map_services/distance_ranking/ranking_core.dart';
 
 NearbyStore _store(String id, double lat, double lng) {
   return NearbyStore(
