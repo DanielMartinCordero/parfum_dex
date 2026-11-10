@@ -1,7 +1,15 @@
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter/foundation.dart';
 
-import '../config/app_check_config.dart';
+import '../../config/app_check_config.dart';
+import 'app_check_debug_token_stub.dart'
+    if (dart.library.js_interop) 'app_check_debug_token_web.dart';
+
+/// Token de depuración fijo para la web en local. Se pasa al ejecutar:
+///   `flutter run -d chrome --dart-define=APPCHECK_DEBUG_TOKEN=TU_TOKEN`
+/// y ese mismo token se registra una vez en Firebase > App Check > (app web)
+/// > Administrar tokens de depuración. Vacío = no se usa.
+const _debugToken = String.fromEnvironment('APPCHECK_DEBUG_TOKEN');
 
 /// Activa Firebase App Check. Se llama una vez, justo después de
 /// Firebase.initializeApp().
@@ -18,7 +26,9 @@ import '../config/app_check_config.dart';
 /// - Android en release: Play Integrity. Solo valida instalaciones hechas
 ///   desde Google Play (vale la pista de prueba interna). Un APK instalado a
 ///   mano NO pasará cuando App Check esté en Enforce.
-/// - Web: reCAPTCHA Enterprise (invisible para el usuario).
+/// - Web: reCAPTCHA Enterprise (invisible para el usuario). En debug, si se
+///   pasa APPCHECK_DEBUG_TOKEN, se usa ese token fijo en su lugar, porque
+///   reCAPTCHA no da tokens válidos en localhost.
 class AppCheckService {
   AppCheckService._();
 
@@ -29,6 +39,18 @@ class AppCheckService {
         'en lib/config/app_check_config.dart',
       );
       return;
+    }
+
+    if (kIsWeb && kDebugMode) {
+      if (_debugToken.isNotEmpty) {
+        // Hay que ponerlo antes de activate(): el SDK de JS lo lee al iniciar.
+        setAppCheckDebugToken(_debugToken);
+        debugPrint('App Check web: usando el token de depuración fijo.');
+      } else {
+        debugPrint(
+          'App Check web: sin APPCHECK_DEBUG_TOKEN, se usa reCAPTCHA Enterprise.',
+        );
+      }
     }
 
     try {
