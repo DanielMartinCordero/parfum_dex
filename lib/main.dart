@@ -6,7 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 
 import 'firebase_options.dart';
 
-import 'package:parfum_dex/services/app_check_service.dart';
+import 'package:parfum_dex/services/app_check_services/app_check_service.dart';
 import 'package:parfum_dex/services/preferences_service.dart';
 
 Future<void> main() async {

@@ -1,44 +1,28 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../dev/fake_stores_repository.dart';
 import '../../models/nearby_store.dart';
 import 'cloud_function_stores_repository.dart';
-
-/// Origen de las tiendas cercanas. La implementación real es
-/// [CloudFunctionStoresRepository]; [FakeStoresRepository] genera tiendas de
-/// prueba alrededor del usuario.
-abstract interface class StoresRepository {
-  /// Devuelve como mucho 5 tiendas ordenadas por distancia y el radio (km)
-  /// con el que se encontraron: 2, 10, 25 o 40.
-  Future<({int radiusKm, List<NearbyStore> stores})> findNearby(LatLng position);
-}
 
 /// Busca perfumerías cerca del usuario y guarda el último resultado en
 /// memoria, compartido por todas las fichas de perfume durante la sesión:
 /// abrir otro perfume no vuelve a pedir la ubicación ni a consultar nada.
 /// Solo [search] (el botón de recargar) repite la búsqueda.
 class NearbyStoresService {
-  // true: tiendas de prueba. false: tiendas reales de la Cloud Function.
-  static const _useFakeStores = true;
-
-  static final StoresRepository _defaultRepository =
-      _useFakeStores ? FakeStoresRepository() : CloudFunctionStoresRepository();
-
   // La única instancia del servicio (singleton): así todas las fichas de
   // la pantalla perfume_details comparten la misma caché.
-  static final NearbyStoresService instance = NearbyStoresService._(_defaultRepository);
+  static final NearbyStoresService instance = NearbyStoresService._();
 
   /// Pasado este tiempo el resultado se descarta: el usuario puede haberse
   /// movido y las tiendas ya no serían las más cercanas.
   static const cacheTtl = Duration(minutes: 30);
 
-  final StoresRepository _repository;
+  final CloudFunctionStoresRepository _repository = CloudFunctionStoresRepository();
 
   NearbyStoresResult? _cached;
 
   //Constructor
-  NearbyStoresService._(this._repository);
+  NearbyStoresService._();
 
   /// Último resultado de la sesión, o null si aún no se ha buscado o si ya
   /// ha caducado.

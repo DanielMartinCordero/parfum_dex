@@ -29,6 +29,7 @@ lib/
   services/            auth_service, users_service, perfumes_service,
                        catalog_search_service, vault_service,
                        preferences_service
+    app_check_services/ App Check providers, debug token on web
     map_services/      location_service (geolocator), nearby_stores_service
                        (session cache), cloud_function_stores_repository,
                        distance_ranking/ (isolate on native, main thread on web)
@@ -38,7 +39,6 @@ lib/
     nearby_stores/     section (state machine), blurred placeholder,
                        flutter_map map, sorted list, shop details sheet
   config/              map_config.dart: tile server, user agent, attribution
-  dev/                 fake stores repository, used until the function is live
   utils/               validators.dart, search_normalizer.dart,
                        distance_format.dart
                        (pure functions, no Flutter or Firebase)
@@ -155,9 +155,9 @@ Choose one:
 - **Use your own Firebase project:**
   1. Create a Firebase project and enable **Authentication > Email/Password** and **Firestore Database**.
   2. Install the FlutterFire CLI and run `flutterfire configure --platforms=android,web`.
-     When asked for the Android package name, use `com.parfumdex.parfum_dex`, or change `applicationId` in `android/app/build.gradle.kts` to match the one you register.
+     When asked for the Android package name, use `com.perfumedex.app`, or change `applicationId` in `android/app/build.gradle.kts` to match the one you register.
   3. Publish the rules in `lib/firestore.rules` (Firebase console > Firestore > Rules, or `firebase deploy --only firestore:rules`).
-  4. Load the perfume shops: in `tools/stores`, run `npm install`, then `node seed_stores.mjs <shops.json>` to preview and add `--upload` to write them (same service-account key, saved as `tools/stores/serviceAccountKey.json`). Then deploy the function (it needs the Blaze plan). It is written in Python 3.14: in `functions`, create the virtual environment the Firebase CLI expects with `py -3.14 -m venv venv` (macOS/Linux: `python3.14 -m venv venv`), install the dependencies with `venv\Scripts\pip install -r requirements.txt` (macOS/Linux: `venv/bin/pip`), then run `firebase deploy --only functions` from the project root. Until it is deployed, `NearbyStoresService` uses fake shops placed around the user (`_useFakeStores`).
+  4. Load the perfume shops: in `tools/stores`, run `npm install`, then `node seed_stores.mjs <shops.json>` to preview and add `--upload` to write them (same service-account key, saved as `tools/stores/serviceAccountKey.json`). Then deploy the function (it needs the Blaze plan). It is written in Python 3.14: in `functions`, create the virtual environment the Firebase CLI expects with `py -3.14 -m venv venv` (macOS/Linux: `python3.14 -m venv venv`), install the dependencies with `venv\Scripts\pip install -r requirements.txt` (macOS/Linux: `venv/bin/pip`), then run `firebase deploy --only functions` from the project root.
   5. Load the catalog with the seeder in `tools/seeder` (`npm install`, then `npm run dry-run` and `npm run seed`). It needs a service-account key at `tools/seeder/serviceAccountKey.json` and a perfumes JSON file (default `data/perfumes_demo.json`, or pass `--data <file>`); both are git-ignored, and the demo dataset is not in the repo. It writes both `perfumes` and `catalog/searchIndex`. The catalog screen lists what is in the index, so perfumes added by hand in the console do not appear there.
 
 ### 3. Run
@@ -173,6 +173,8 @@ flutter run
 ```
 
 If you change flow-level code (sign-up, navigation) while running, do a full restart; hot reload does not always apply it.
+
+App Check is enforced by the `nearbyStores` function, and reCAPTCHA Enterprise does not issue valid tokens on localhost. For web debug runs, register a debug token once in Firebase console > App Check > (web app) > Manage debug tokens and pass it on every run: `flutter run -d chrome --dart-define=APPCHECK_DEBUG_TOKEN=<token>`. On Android debug builds the SDK prints its own debug token in Logcat the first time; register that one for the Android app.
 
 ### 4. Check
 
@@ -206,7 +208,7 @@ cd functions && venv\Scripts\python -m unittest -v
 - Catalog images are external URLs; some may be unavailable. Their host does not allow CORS, so on web each image is drawn as an HTML `<img>` element, which makes scrolling heavy when many are on screen. Hosting the images ourselves with CORS would remove this.
 - Web debug mode is much slower than release; judge scrolling with `flutter run -d chrome --release`.
 - iOS is not configured.
-- Nearby shops use fake data until the `nearbyStores` function is deployed. Opening hours come from OpenStreetMap as a typical week, so public holidays and seasonal changes are not reflected, and a slot that crosses midnight is not detected as open.
+- Opening hours of the nearby shops come from OpenStreetMap as a typical week, so public holidays and seasonal changes are not reflected, and a slot that crosses midnight is not detected as open.
 - The map uses the public OpenStreetMap tile server, which is not meant for production traffic.
 
 ## License
