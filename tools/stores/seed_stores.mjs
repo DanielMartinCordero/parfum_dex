@@ -4,6 +4,7 @@
 // Uso (desde tools/stores):
 //   node seed_stores.mjs <tiendas.json>            → solo vista previa: no sube nada
 //   node seed_stores.mjs <tiendas.json> --upload   → sube a Firestore
+//   node seed_stores.mjs --delete-excluded         → solo borra las cadenas excluidas
 //   ... --key <ruta>   clave de la cuenta de servicio (por defecto ./serviceAccountKey.json)
 //
 // La vista previa se guarda junto al fichero de entrada como
@@ -23,6 +24,11 @@ import opening_hours from 'opening_hours';
 const COLLECTION = 'stores';
 const DUPLICATE_RADIUS_M = 15; // misma cadena a menos de 15 m = la misma tienda
 const BATCH_SIZE = 400; // Firestore admite hasta 500 escrituras por lote
+
+// Cadenas que no se suben: venden sobre todo maquillaje o solo perfumes de
+// marca propia, así que no sirven para encontrar un perfume del catálogo.
+// Al subir, sus documentos se borran de Firestore si ya estaban.
+const EXCLUDED_CHAINS = ['KIKO Milano', 'Yves Rocher', 'Rituals', 'Equivalenza'];
 
 // Firestore no admite listas dentro de listas, así que el horario se guarda
 // como un mapa { mon: [...], tue: [...], ... }. La Cloud Function lo
@@ -220,7 +226,8 @@ function toFirestoreDoc(store, now) {
   };
 }
 
-async function upload(stores, keyPath) {
+/** Conecta con Firestore usando la clave de la cuenta de servicio. */
+function connect(keyPath) {
   if (!fs.existsSync(keyPath)) {
     console.error(`\nNo encuentro la clave de la cuenta de servicio en ${keyPath}`);
     console.error('Descárgala en Firebase Console → Configuración del proyecto →');
@@ -230,10 +237,30 @@ async function upload(stores, keyPath) {
 
   const serviceAccount = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
   initializeApp({ credential: cert(serviceAccount) });
-  const db = getFirestore();
+  console.log(`\nProyecto: ${serviceAccount.project_id}`);
+  return getFirestore();
+}
+
+/** Borra de Firestore las tiendas de las cadenas excluidas. */
+async function deleteExcluded(db) {
+  const excluded = await db
+    .collection(COLLECTION)
+    .where('chain', 'in', EXCLUDED_CHAINS)
+    .get();
+  for (let start = 0; start < excluded.docs.length; start += BATCH_SIZE) {
+    const batch = db.batch();
+    for (const doc of excluded.docs.slice(start, start + BATCH_SIZE)) {
+      batch.delete(doc.ref);
+    }
+    await batch.commit();
+  }
+  console.log(`Borradas ${excluded.docs.length} tiendas de cadenas excluidas.`);
+}
+
+async function upload(stores, db) {
   const now = Timestamp.now();
 
-  console.log(`\nSubiendo ${stores.length} tiendas a ${serviceAccount.project_id}/${COLLECTION}...`);
+  console.log(`Subiendo ${stores.length} tiendas a ${COLLECTION}...`);
   for (let start = 0; start < stores.length; start += BATCH_SIZE) {
     const chunk = stores.slice(start, start + BATCH_SIZE);
     const batch = db.batch();
@@ -254,27 +281,49 @@ async function main() {
   const args = process.argv.slice(2);
   let inputPath = null;
   let shouldUpload = false;
+  let onlyDelete = false;
   let keyPath = './serviceAccountKey.json';
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--upload') {
       shouldUpload = true;
+    } else if (args[i] === '--delete-excluded') {
+      onlyDelete = true;
     } else if (args[i] === '--key') {
       keyPath = args[i + 1];
       i++; // el siguiente argumento es la ruta, no el fichero de entrada
+      if (!keyPath) {
+        console.error('Falta la ruta después de --key.');
+        process.exit(1);
+      }
+    } else if (args[i].startsWith('--')) {
+      // Una opción mal escrita (p. ej. --deleted-excluded) no debe tomarse
+      // como el nombre del fichero de tiendas.
+      console.error(`Opción desconocida: ${args[i]}`);
+      process.exit(1);
     } else {
       inputPath = args[i];
     }
   }
 
+  // Solo borrar: no hace falta el fichero de tiendas ni volver a subirlas.
+  if (onlyDelete) {
+    await deleteExcluded(connect(keyPath));
+    return;
+  }
+
   if (!inputPath) {
-    console.error('Uso: node seed_stores.mjs <tiendas.json> [--upload] [--key <ruta>]');
+    console.error(
+      'Uso: node seed_stores.mjs <tiendas.json> [--upload] [--key <ruta>]\n' +
+        '     node seed_stores.mjs --delete-excluded [--key <ruta>]',
+    );
     process.exit(1);
   }
 
   const raw = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
   const stats = { hoursUnparsed: [], mergedGroups: [] };
 
-  const normalized = raw.map((store) => normalizeStore(store, stats));
+  const kept = raw.filter((store) => !EXCLUDED_CHAINS.includes(store.cadena));
+  const normalized = kept.map((store) => normalizeStore(store, stats));
   const stores = mergeDuplicates(normalized, stats);
 
   // Vista previa: lo mismo que se subiría, con lat/lng en vez de GeoPoint
@@ -289,6 +338,7 @@ async function main() {
 
   const count = (predicate) => stores.filter(predicate).length;
   console.log(`Tiendas de entrada:        ${raw.length}`);
+  console.log(`Excluidas por cadena:      ${raw.length - kept.length}`);
   console.log(`Duplicados fusionados:     ${stats.mergedGroups.length} grupos`);
   for (const group of stats.mergedGroups) console.log(`   · ${group.join('  +  ')}`);
   console.log(`Tiendas a subir:           ${stores.length}`);
@@ -300,7 +350,9 @@ async function main() {
   console.log(`\nVista previa guardada en ${previewPath}`);
 
   if (shouldUpload) {
-    await upload(stores, keyPath);
+    const db = connect(keyPath);
+    await upload(stores, db);
+    await deleteExcluded(db);
   } else {
     console.log('No se ha subido nada. Revisa la vista previa y repite con --upload.');
   }
