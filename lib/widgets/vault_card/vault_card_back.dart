@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import '../../models/perfume.dart';
 import '../../models/vault_item.dart';
@@ -57,6 +59,7 @@ class _VaultCardBackState extends State<VaultCardBack> {
     final int? capacity = item.capacityMl;
     final double? costPerSpray =
         item.purchasePrice != null ? item.costPerSpray : null;
+    final Uint8List? userBottlePhoto = item.userBottlePhoto;
 
     return Card(
       margin: EdgeInsets.zero,
@@ -151,17 +154,7 @@ class _VaultCardBackState extends State<VaultCardBack> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      padding: const EdgeInsets.all(8),
-                      child: Image.network(
-                        item.imageUrl,
-                        fit: BoxFit.contain,
-                        // En web, sin cabeceras CORS se pinta como <img> normal
-                        webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
-                        errorBuilder: (context, error, stackTrace) => Icon(
-                          Icons.image_not_supported_outlined,
-                          color: Colors.grey.shade400,
-                        ),
-                      ),
+                      child: _buildPhoto(item),
                     ),
                     const SizedBox(width: 8),
 
@@ -287,5 +280,39 @@ class _VaultCardBackState extends State<VaultCardBack> {
     final String day = date.day.toString().padLeft(2, '0');
     final String month = date.month.toString().padLeft(2, '0');
     return '$day/$month/${date.year}';
+  }
+  // Foto del usuario si la tiene; si no, la del catálogo
+  Widget _buildPhoto(VaultItem item) {
+    // Copia local: así Dart sabe que tras comprobarla ya no es null
+    final Uint8List? photo = item.userBottlePhoto;
+
+    if (photo != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Image.memory(
+          photo,
+          fit: BoxFit.cover,
+          gaplessPlayback: true,
+          errorBuilder: (context, error, stackTrace) => Icon(
+            Icons.broken_image_outlined,
+            color: Colors.grey.shade400,
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Image.network(
+        item.imageUrl,
+        fit: BoxFit.contain,
+        // En web, sin cabeceras CORS se pinta como <img> normal
+        webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+        errorBuilder: (context, error, stackTrace) => Icon(
+          Icons.image_not_supported_outlined,
+          color: Colors.grey.shade400,
+        ),
+      ),
+    );
   }
 }
