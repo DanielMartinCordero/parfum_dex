@@ -5,6 +5,10 @@
     <!-- Ubicación aproximada para "Perfumerías cerca de ti": para radios de
          varios km no hace falta la precisa. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Cámara para la foto del frasco del armario. La galería no necesita
+         permiso: Android 13+ usa el Photo Picker y las versiones anteriores
+         el selector de archivos del sistema. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
 
     <application
         android:label="PerfumeDex"

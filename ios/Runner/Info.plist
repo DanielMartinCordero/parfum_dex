@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>PerfumeDex usa la cámara para hacer la foto de tus frascos del armario.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>PerfumeDex accede a tus fotos para que elijas la imagen de tus frascos del armario.</string>
 </dict>
 </plist>
