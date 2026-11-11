@@ -1,7 +1,12 @@
+import 'dart:convert'; // base64Encode y base64Decode
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 class VaultItem {
+  // Nombre del campo en Firestore. Lo usan también VaultService y las reglas
+  static const String photoField = 'photo';
+
   final String id;
   final String perfumeId;
   final String brand;
@@ -14,6 +19,9 @@ class VaultItem {
   final double? purchasePrice;
   final double? rating;
   final DateTime addedAt; //Fecha de añadido al armario
+  // Foto del frasco hecha por el usuario, ya en bytes JPEG listos para
+  // Image.memory. null si no tiene. En Firestore se guarda como texto Base64
+  final Uint8List? userItemPhoto;
 
   const VaultItem({
     required this.id,
@@ -26,7 +34,9 @@ class VaultItem {
     this.purchasePrice,
     this.rating,
     required this.addedAt, // Requerido en el constructor
+    this.userItemPhoto,
   });
+
   double get fillPercentage {
     // Copia local: así Dart sabe que tras comprobarla ya no es null
     final int? capacity = capacityMl;
@@ -77,9 +87,28 @@ class VaultItem {
       rating: (data['rating'] as num?)?.toDouble(),
       // Conversión segura de Timestamp de Firestore a DateTime
       addedAt: (data['addedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      // Se decodifica aquí, una sola vez por snapshot, y no en cada build
+      userItemPhoto: _decodePhoto(data[photoField]),
     );
   }
+
+  // Convierte el texto Base64 de Firestore en bytes. Devuelve null si no hay
+  // foto o si el texto está corrupto: una foto rota no debe tumbar el armario
+  static Uint8List? _decodePhoto(Object? value) {
+    // "is! String" cubre también el null: si no es un texto, no hay foto
+    if (value is! String || value.isEmpty) return null;
+    try {
+      return base64Decode(value);
+    } on FormatException catch (e) {
+      debugPrint('Foto del armario no válida, se ignora: $e');
+      return null;
+    }
+  }
+
   Map<String, dynamic> toFirestore() {
+    // Copia local: dentro del mapa Dart no puede asegurar que el campo
+    // sigue sin ser null, con una variable local sí
+    final Uint8List? photo = userItemPhoto;
     return {
       'perfumeId': perfumeId,
       'perfumeName': name,
@@ -90,6 +119,8 @@ class VaultItem {
       'purchasePrice': purchasePrice,
       'rating': rating,
       'addedAt': Timestamp.fromDate(addedAt), // Conversión a formato Firebase
+      // Solo se escribe si hay foto: así los frascos sin foto no llevan el campo
+      if (photo != null) photoField: base64Encode(photo),
     };
   }
 }
