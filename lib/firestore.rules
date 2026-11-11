@@ -86,7 +86,8 @@ service cloud.firestore {
       function validVaultItem(d) {
         return d.keys().hasOnly([
             'perfumeId', 'perfumeName', 'brand', 'imageUrl',
-            'capacityMl', 'remainingMl', 'purchasePrice', 'rating', 'addedAt'])
+            'capacityMl', 'remainingMl', 'purchasePrice', 'rating', 'addedAt',
+            'userBottlePhoto'])
           && d.perfumeId is string && d.perfumeId.size() <= 100
           && optString(d, 'perfumeName', 200)
           && optString(d, 'brand', 100)
@@ -95,7 +96,11 @@ service cloud.firestore {
           && optNumber(d, 'remainingMl', 0, 1000)
           && optNumber(d, 'purchasePrice', 0, 2000)    // Validators.maxPurchasePrice
           && optNumber(d, 'rating', 0, 5)              // Validators.maxRating
-          && d.addedAt is timestamp;
+          && d.addedAt is timestamp
+          // Foto del frasco en Base64: opcional y por debajo de 300 000
+          // caracteres (VaultService.maxPhotoLength). El documento admite 1 MB
+          && (!('userBottlePhoto' in d)
+              || (d.userBottlePhoto is string && d.userBottlePhoto.size() < 300000));
       }
 
       match /vault/{itemId} {
