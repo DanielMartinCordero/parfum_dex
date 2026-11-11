@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -132,5 +134,20 @@ class VaultService {
       print('Error al eliminar el perfume: $e');
       rethrow;
     }
+  }
+
+  Future<void> saveImage(String itemId, Uint8List image) async{
+    final String encoded = base64Encode(image);
+    if (encoded.length >= 300000) {
+      throw Exception('La ocupa demasiado');
+    }
+    await _userVaultRef.doc(itemId).update({
+      'userBottlePhoto' : encoded
+    });
+  }
+  Future<void> deleteImage(String itemId) async{
+    await _userVaultRef.doc(itemId).update({
+      'userBottlePhoto' : FieldValue.delete()
+    });
   }
 }

@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 
 class VaultItem {
   // Nombre del campo en Firestore. Lo usan también VaultService y las reglas
-  static const String photoField = 'photo';
+  static const String userBottlePhotoField = 'userBottlePhoto';
 
   final String id;
   final String perfumeId;
@@ -21,7 +21,7 @@ class VaultItem {
   final DateTime addedAt; //Fecha de añadido al armario
   // Foto del frasco hecha por el usuario, ya en bytes JPEG listos para
   // Image.memory. null si no tiene. En Firestore se guarda como texto Base64
-  final Uint8List? userItemPhoto;
+  final Uint8List? userBottlePhoto;
 
   const VaultItem({
     required this.id,
@@ -34,7 +34,7 @@ class VaultItem {
     this.purchasePrice,
     this.rating,
     required this.addedAt, // Requerido en el constructor
-    this.userItemPhoto,
+    this.userBottlePhoto,
   });
 
   double get fillPercentage {
@@ -88,7 +88,7 @@ class VaultItem {
       // Conversión segura de Timestamp de Firestore a DateTime
       addedAt: (data['addedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       // Se decodifica aquí, una sola vez por snapshot, y no en cada build
-      userItemPhoto: _decodePhoto(data[photoField]),
+      userBottlePhoto: _decodePhoto(data[userBottlePhotoField]),
     );
   }
 
@@ -108,7 +108,7 @@ class VaultItem {
   Map<String, dynamic> toFirestore() {
     // Copia local: dentro del mapa Dart no puede asegurar que el campo
     // sigue sin ser null, con una variable local sí
-    final Uint8List? photo = userItemPhoto;
+    final Uint8List? photo = userBottlePhoto;
     return {
       'perfumeId': perfumeId,
       'perfumeName': name,
@@ -120,7 +120,7 @@ class VaultItem {
       'rating': rating,
       'addedAt': Timestamp.fromDate(addedAt), // Conversión a formato Firebase
       // Solo se escribe si hay foto: así los frascos sin foto no llevan el campo
-      if (photo != null) photoField: base64Encode(photo),
+      if (photo != null) userBottlePhotoField: base64Encode(photo),
     };
   }
 }
