@@ -2,13 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart' show openAppSettings;
 import '../../models/vault_item.dart';
 import '../../services/photo_services/image_compression/image_compression.dart';
 import '../../services/photo_services/photo_service.dart';
 import '../../services/vault_service.dart';
 import '../../utils/validators.dart';
-import 'photo_selector.dart';
+import 'vault_photo_section/photo_selector.dart';
+import 'vault_photo_section/photo_preview.dart';
 
 const double _starWidth = 40;
 
@@ -299,94 +299,7 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
     }
   }
   // Vista previa a la izquierda y botones a la derecha; debajo, el error
-  Widget _buildPhotoSection() {
-    final Uint8List? photo = _currentPhoto;
-    final String? error = _photoError;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            _buildPhotoPreview(photo),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _isPhotoLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: _handlePickPhoto,
-                          icon: const Icon(Icons.add_a_photo_outlined),
-                          label: Text(
-                            photo == null ? 'Añadir foto' : 'Cambiar foto',
-                          ),
-                        ),
-                        if (photo != null)
-                          TextButton.icon(
-                            onPressed: _handleRemovePhoto,
-                            icon: const Icon(Icons.delete_outline),
-                            label: const Text('Quitar foto'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.red.shade700,
-                            ),
-                          ),
-                      ],
-                    ),
-            ),
-          ],
-        ),
-        if (error != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            error,
-            style: TextStyle(color: Colors.red.shade700, fontSize: 13),
-          ),
-          if (_showSettingsButton)
-            TextButton(
-              onPressed: openAppSettings,
-              child: const Text('Abrir ajustes'),
-            ),
-        ],
-      ],
-    );
-  }
-
-  // Cuadro pequeño con la foto del usuario o, si no hay, la del catálogo
-  Widget _buildPhotoPreview(Uint8List? photo) {
-    return Container(
-      width: 96,
-      height: 96,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      clipBehavior: Clip.antiAlias, // recorta la foto con las esquinas
-      child: photo != null
-          ? Image.memory(
-              photo,
-              fit: BoxFit.cover,
-              gaplessPlayback: true, // al cambiarla no parpadea en blanco
-              errorBuilder: (context, error, stackTrace) => Icon(
-                Icons.broken_image_outlined,
-                color: Colors.grey.shade400,
-              ),
-            )
-          : Padding(
-              padding: const EdgeInsets.all(8),
-              child: Image.network(
-                widget.item.imageUrl,
-                fit: BoxFit.contain,
-                webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
-                errorBuilder: (context, error, stackTrace) => Icon(
-                  Icons.image_not_supported_outlined,
-                  color: Colors.grey.shade400,
-                ),
-              ),
-            ),
-    );
-  }
 
   IconData _starIcon(int star) {
     final double rating = _rating ?? 0;
@@ -434,7 +347,15 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
               const SizedBox(height: 16),
 
               // 0. Foto del frasco
-              _buildPhotoSection(),
+              PhotoPreview(
+                photo: _currentPhoto,
+                imageUrl: item.imageUrl,
+                isLoading: _isPhotoLoading,
+                error: _photoError,
+                showSettingsButton: _showSettingsButton,
+                onPick: _handlePickPhoto,
+                onRemove: _handleRemovePhoto
+              ),
               const SizedBox(height: 24),
 
               // 1. Capacidad: solo se pide si el perfume no la traía del catálogo
