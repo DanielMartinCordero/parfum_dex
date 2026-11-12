@@ -155,10 +155,6 @@ class _PhotoSectionState extends State<PhotoSection> {
         : false; // web en PC: directamente la galería
     if (isCamera == null) return; // cerró la ventana sin elegir
 
-    // Por si falla la subida: así se vuelve a lo que había
-    final Uint8List? previousPhoto = _previewPhoto;
-    final bool previousRemoved = _photoRemoved;
-
     try {
       final XFile? file = await _photoService.pickImage(isCamera, widget.item.id);
       // Canceló en la cámara o la galería, o el panel se cerró mientras
@@ -170,29 +166,28 @@ class _PhotoSectionState extends State<PhotoSection> {
       });
 
       final Uint8List photo = await compressPhoto(file);
+      // Antes del mounted: aunque el panel se cerrara mientras comprimía,
+      // la foto se guarda igual
+      _write(_vaultService.saveImage(widget.item.id, photo),
+          'No se pudo guardar la foto');
       if (!mounted) return;
-      // Vista previa antes de subirla: el usuario la ve ya
       setState(() {
         _previewPhoto = photo;
         _photoRemoved = false;
       });
-
-      await _vaultService.saveImage(widget.item.id, photo);
-      widget.onPhotoChanged?.call();
     } on PhotoException catch (e) {
       if (!mounted) return;
       setState(() {
         _photoError = _photoErrorMessage(e.failure);
-        _showSettingsButton = e.failure == PhotoFailure.permanentlyDenied;
+        // Denegado (una vez o para siempre): los ajustes siempre lo arreglan
+        _showSettingsButton = e.failure == PhotoFailure.denied ||
+            e.failure == PhotoFailure.permanentlyDenied;
       });
     } catch (e) {
-      debugPrint('Error al guardar la foto: $e');
+      // Fallo al leer o comprimir la foto (el guardado lo vigila _write)
+      debugPrint('Error al preparar la foto: $e');
       if (!mounted) return;
-      setState(() {
-        _previewPhoto = previousPhoto;
-        _photoRemoved = previousRemoved;
-        _photoError = 'No se pudo guardar la foto. Inténtalo de nuevo';
-      });
+      setState(() => _photoError = 'No se pudo usar la foto. Inténtalo de nuevo');
     } finally {
       // finally se ejecuta siempre: haya ido bien, mal o con return
       if (mounted) setState(() => _isPhotoLoading = false);
@@ -200,38 +195,43 @@ class _PhotoSectionState extends State<PhotoSection> {
   }
 
   // Borra la foto en Firestore. El reverso vuelve a la imagen del catálogo
-  Future<void> _handleRemovePhoto() async {
-    final Uint8List? previousPhoto = _previewPhoto;
-
+  void _handleRemovePhoto() {
+    _write(_vaultService.deleteImage(widget.item.id),
+        'No se pudo quitar la foto');
     setState(() {
-      _isPhotoLoading = true;
       _photoError = null;
       _showSettingsButton = false;
       _previewPhoto = null;
       _photoRemoved = true;
     });
+  }
 
-    try {
-      await _vaultService.deleteImage(widget.item.id);
-      widget.onPhotoChanged?.call();
-    } catch (e) {
-      debugPrint('Error al quitar la foto: $e');
+  // Lanza la escritura sin esperarla. Firestore aplica el cambio en local al
+  // momento (la tarjeta ya lo ve) y lo sube cuando hay red; con await, sin
+  // conexión el spinner no pararía nunca. Si el servidor lo rechaza, se
+  // vuelve a la foto de antes. Se llama antes de cambiar la vista previa
+  void _write(Future<void> write, String errorMessage) {
+    final Uint8List? previousPhoto = _previewPhoto;
+    final bool previousRemoved = _photoRemoved;
+    widget.onPhotoChanged?.call();
+
+    write.catchError((Object e) {
+      debugPrint('$errorMessage: $e');
       if (!mounted) return;
       setState(() {
         _previewPhoto = previousPhoto;
-        _photoRemoved = false;
-        _photoError = 'No se pudo quitar la foto. Inténtalo de nuevo';
+        _photoRemoved = previousRemoved;
+        _photoError = '$errorMessage. Inténtalo de nuevo';
       });
-    } finally {
-      if (mounted) setState(() => _isPhotoLoading = false);
-    }
+    });
   }
 
   // Texto para cada motivo de fallo de PhotoService o de la compresión
   String _photoErrorMessage(PhotoFailure failure) {
     switch (failure) {
       case PhotoFailure.denied:
-        return 'Necesitas dar permiso a la cámara para hacer la foto';
+        return 'Necesitas permiso de cámara. Pulsa de nuevo en Cámara y elige '
+            '"Permitir", o actívalo en los ajustes';
       case PhotoFailure.permanentlyDenied:
         return 'El permiso de la cámara está bloqueado. Actívalo en los ajustes';
       case PhotoFailure.unsupportedFormat:

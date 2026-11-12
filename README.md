@@ -11,6 +11,7 @@ Built with **Flutter** and **Firebase** (Authentication + Cloud Firestore). Runs
 - Catalog of perfumes as a grid, with in-memory search by name, brand or note.
 - Perfume detail: olfactory pyramid, seasons and retail offers. The URL carries the perfume id, so it survives a page reload on web.
 - Personal vault: add perfumes from the detail screen; the list updates in real time. Free tier limited to 5 perfumes.
+- Bottle photos: take or pick a photo of each bottle in the vault. It is compressed on the device and shown on the back of the card instead of the catalog image.
 - Nearby perfume shops (at the end of every perfume detail): on tap, asks for location permission, finds the 5 closest of ~1,100 shops in Spain (OpenStreetMap data), shows them on a map and in a list sorted by distance, and opens a card with address, opening hours, phone and directions. If the device cannot give its position, it offers the area of the last search.
 - Profile: view and edit your display name, see and delete the saved search area, sign out.
 - Route guard: private screens redirect to login when there is no session.
@@ -33,11 +34,15 @@ lib/
     map_services/      location_service (geolocator), nearby_stores_service
                        (session cache), cloud_function_stores_repository,
                        distance_ranking/ (isolate on native, main thread on web)
+    photo_services/    photo_service (picker, camera permission, lost photos),
+                       image_compression/ (isolate on native, picker on web)
   screens/             splash, onboarding, login, register, home_shell,
                        explore (catalog), perfume_detail, vault, profile
   widgets/             perfume_card, vault_item_card, search_bar_widget
     nearby_stores/     section (state machine), blurred placeholder,
                        flutter_map map, sorted list, shop details sheet
+    vault_card/        flip card (front, back), edit sheet,
+                       vault_photo_section/ (photo section, source dialog)
   config/              map_config.dart: tile server, user agent, attribution
   utils/               validators.dart, search_normalizer.dart,
                        distance_format.dart
@@ -77,7 +82,7 @@ tools/stores/          Node scripts that geocode and load the shops
 | `catalog/searchIndex` | Search index: `items` with id, brand, name, image, genre and notes of every perfume | Read: anyone. Write: nobody from the client (the seeder uses the Admin SDK). |
 | `stores/{osmId}` | Perfume shop: `chain`, `address`, `postalCode`, `city`, `location` (GeoPoint), `geohash` and its prefixes `geohash3`/`geohash4`/`geohash5`, `phone`, `weeklyHours` (map `mon`..`sun` of `"HH:MM-HH:MM"` slots), `osmIds`, `updatedAt` (Timestamp) | Nobody from the client. Read by the `nearbyStores` function; written by `tools/stores/seed_stores.mjs`. |
 | `users/{uid}` | Profile (email, display name, created at, ...). Optional `lastSearchLocation` (GeoPoint, rounded to ~1 km), `lastSearchAt` (Timestamp) and `lastSearchArea` (city of the closest shop) | Owner only. |
-| `users/{uid}/vault/{itemId}` | One owned bottle | Owner only. |
+| `users/{uid}/vault/{itemId}` | One owned bottle. Optional `userBottlePhoto`: the user's photo as Base64 JPEG text, under 300,000 characters | Owner only. |
 
 Minimal `perfumes` document (exact field names are in `lib/models/perfume.dart`; `prices` and `tareInfo` are optional):
 
@@ -122,6 +127,15 @@ The list under the map orders the shops by their distance to the user. The work 
 | 100,000 | 61 ms | 93 ms |
 
 The isolate is always slower end to end, because spawning it and copying the list costs a fraction of a millisecond. It only pays off once the work on the main thread would no longer fit in a frame (16 ms at 60 fps): at 100,000 points the main thread would freeze the UI for about four frames, while the isolate keeps it responsive. For 5 shops the isolate is pure overhead, and the measurement shows exactly how much. A first version sent one progress message per point and was nine times slower than the main thread at 100,000 points; the ranking now reports at most 100 updates (one per 1%).
+
+## Bottle photos
+
+Each bottle in the vault can carry a photo taken by its owner. It is added from the edit sheet and replaces the catalog image on the back of the card.
+
+- **Picking.** Camera or gallery through `image_picker`; a desktop browser only gets the gallery. The camera permission is requested with `permission_handler` when the camera is chosen, not before. If it is refused, the sheet explains how to allow it and offers a button to the app settings. The gallery needs no permission on Android: Android 13+ opens the system Photo Picker and older versions the system file picker, so the app never reads the photo library itself.
+- **Compression.** A phone photo weighs several MB and a Firestore document is limited to 1 MiB, so the photo is shrunk before saving. On Android the `image` package decodes it, applies its EXIF rotation, resizes it to 400 px wide and encodes it as JPEG at quality 70. Decoding a full-size photo is heavy, so all of it runs inside `Isolate.run` while the sheet shows a spinner and keeps responding. If the result is still too large, the quality drops in steps down to 30. Formats the package cannot decode, such as HEIC, are rejected with a message. Browsers have no Dart isolates, so on web the picker does the resizing itself (`maxWidth: 400`, `imageQuality: 70`, done by the browser) and the app only checks the size. The code is in `lib/services/photo_services/image_compression/`, with the same conditional import as the distance ranking.
+- **Storage.** The JPEG is saved as Base64 text in the `userBottlePhoto` field of the vault document, under 300,000 characters (about 220 KB of JPEG, usually much less), a limit the security rules enforce too. Base64 makes it a third larger, but the photo lives in the same document as the bottle: it syncs across devices with the rest of the data and needs no extra service. The model decodes it once per snapshot, not on every rebuild. The trade-off is that every update of the vault stream downloads the photos again; if vaults become public or bottles get several photos, the photo will move to Cloud Storage, and only `VaultService` and the model would change.
+- **Lost photos.** Android may close the app while the camera is open. Before opening it, the app saves the bottle id with `shared_preferences`; the next time the vault opens, `retrieveLostData()` returns the photo and the app finishes compressing and saving it.
 
 ## Getting started
 
@@ -191,7 +205,7 @@ cd functions && venv\Scripts\python -m unittest -v
 2. **Register** with an email, a display name and a password (6 or more characters), or **sign in** if you already have an account.
 3. **Catalog tab:** browse the grid and use the search bar (name, brand or note). Tap a perfume to open its detail.
 4. **Detail:** see notes, seasons and offers, and tap **Añadir a mi armario** (add to my wardrobe) to add it to your vault. Duplicates are blocked, and the free tier allows 5 perfumes.
-5. **Vault tab:** your perfumes, updated in real time. A brand-new account shows an empty state with a shortcut to the catalog.
+5. **Vault tab:** your perfumes, updated in real time. A brand-new account shows an empty state with a shortcut to the catalog. Edit a bottle to add a photo from the camera or the gallery; flip the card to see it.
 6. **Nearby shops:** at the bottom of a perfume detail, tap **Ver perfumerías cercanas** and allow location. Tap a marker or a row of the list to open the shop card.
 7. **Profile tab:** edit your display name, delete the saved search area, or sign out.
 
