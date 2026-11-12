@@ -59,7 +59,6 @@ class _VaultCardBackState extends State<VaultCardBack> {
     final int? capacity = item.capacityMl;
     final double? costPerSpray =
         item.purchasePrice != null ? item.costPerSpray : null;
-    final Uint8List? userBottlePhoto = item.userBottlePhoto;
 
     return Card(
       margin: EdgeInsets.zero,
