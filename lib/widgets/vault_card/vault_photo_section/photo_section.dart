@@ -15,10 +15,13 @@ import 'photo_selector.dart';
 class PhotoSection extends StatefulWidget {
   // Solo necesita el frasco: su id para guardar, su foto y la del catálogo
   final VaultItem item;
+  //Para avisar a vault_edit_sheet de que ha habido cambios, y mostrar el snackbar de cambios guardados
+  final VoidCallback? onPhotoChanged;
 
   const PhotoSection({
     super.key,
     required this.item,
+    this.onPhotoChanged,
   });
 
   @override
@@ -175,6 +178,7 @@ class _PhotoSectionState extends State<PhotoSection> {
       });
 
       await _vaultService.saveImage(widget.item.id, photo);
+      widget.onPhotoChanged?.call();
     } on PhotoException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -209,6 +213,7 @@ class _PhotoSectionState extends State<PhotoSection> {
 
     try {
       await _vaultService.deleteImage(widget.item.id);
+      widget.onPhotoChanged?.call();
     } catch (e) {
       debugPrint('Error al quitar la foto: $e');
       if (!mounted) return;

@@ -42,6 +42,7 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
 
   double? _rating;
   bool _isSaving = false;
+  bool _photoChanged = false;
 
   @override
   void initState() {
@@ -151,7 +152,7 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
         purchasePrice: _parseNumber(_priceController.text),
         rating: _rating,
       );
-      snackBar = hasChanged
+      snackBar = (hasChanged || _photoChanged)
           ? const SnackBar(
               content: Text('Cambios guardados'),
               backgroundColor: Colors.green,
@@ -226,7 +227,7 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
               const SizedBox(height: 16),
 
               // 0. Foto del frasco
-              PhotoSection(item: item),
+              PhotoSection(item: item, onPhotoChanged: () => _photoChanged = true),
               const SizedBox(height: 24),
 
               // 1. Capacidad: solo se pide si el perfume no la traía del catálogo
