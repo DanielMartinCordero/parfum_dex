@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../routes/app_routes.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import '../models/vault_item.dart';
+import '../services/photo_services/image_compression/image_compression.dart';
+import '../services/photo_services/photo_service.dart';
 import '../services/vault_service.dart';
 import '../widgets/vault_card/flip_card.dart';
 import '../widgets/vault_card/vault_card_edit_overlay.dart';
@@ -35,6 +37,39 @@ class _VaultScreenState extends State<VaultScreen> {
   void initState() {
     super.initState();
     _subscribeToVault();
+    // Sin await: initState no puede esperar. Se lanza y sigue por su cuenta
+    _reviewForLostPhoto();
+  }
+
+  // Si Android cerró la app mientras la cámara estaba abierta, la foto se
+  // quedó sin guardar. Aquí se termina lo que no pudo hacer el panel:
+  // comprimirla y guardarla. El stream trae luego la tarjeta con la foto
+  Future<void> _reviewForLostPhoto() async {
+    try {
+      final lost = await PhotoService().recoverLostPhoto();
+      if (lost == null) return; // lo normal: no había nada pendiente
+
+      final bytes = await compressPhoto(lost.file);
+      // Si el frasco se borró mientras tanto, update() falla y va al catch
+      await _vaultService.saveImage(lost.itemId, bytes);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Hemos recuperado la foto de tu frasco'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      debugPrint('No se pudo recuperar la foto perdida: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo recuperar la última foto que hiciste'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _subscribeToVault() {
