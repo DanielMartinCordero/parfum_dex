@@ -9,7 +9,9 @@ plugins {
 
 android {
     namespace = "com.perfumedex.app"
-    compileSdk = flutter.compileSdkVersion
+    // permission_handler_android exige compilar contra la 37 (Flutter trae 36).
+    // Solo cambia las APIs disponibles, no los móviles en los que se instala
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
