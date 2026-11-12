@@ -1,14 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../models/vault_item.dart';
-import '../../services/photo_services/image_compression/image_compression.dart';
-import '../../services/photo_services/photo_service.dart';
 import '../../services/vault_service.dart';
 import '../../utils/validators.dart';
-import 'vault_photo_section/photo_selector.dart';
-import 'vault_photo_section/photo_preview.dart';
+import 'vault_photo_section/photo_section.dart';
 
 const double _starWidth = 40;
 
@@ -39,7 +34,6 @@ class VaultEditSheet extends StatefulWidget {
 
 class _VaultEditSheetState extends State<VaultEditSheet> {
   final VaultService _vaultService = VaultService();
-  final PhotoService _photoService = PhotoService();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _capacityController;
@@ -48,28 +42,6 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
 
   double? _rating;
   bool _isSaving = false;
-
-  // ---------- Foto del frasco ----------
-  // La cámara solo tiene sentido en móvil (app o navegador del móvil).
-  // En web en un PC se va directo a la galería
-  final bool _showCamera = defaultTargetPlatform == TargetPlatform.android ||
-      defaultTargetPlatform == TargetPlatform.iOS;
-
-  // widget.item no cambia mientras el panel está abierto, así que la foto
-  // nueva se guarda aquí para enseñarla al momento
-  Uint8List? _previewPhoto;
-  // true si el usuario quitó la foto: así no vuelve a salir la de widget.item
-  bool _photoRemoved = false;
-  // Comprimiendo o subiendo: muestra el spinner y bloquea los botones
-  bool _isPhotoLoading = false;
-  // Mensaje de error dentro del panel (un SnackBar quedaría tapado por él)
-  String? _photoError;
-  // Permiso denegado para siempre: se ofrece abrir los ajustes
-  bool _showSettingsButton = false;
-
-  // La foto que se ve ahora en el panel, o null si no hay
-  Uint8List? get _currentPhoto =>
-      _photoRemoved ? null : _previewPhoto ?? widget.item.userBottlePhoto;
 
   @override
   void initState() {
@@ -207,99 +179,6 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
     });
   }
 
-  // Elegir foto -> comprimir -> vista previa -> guardar en Firestore.
-  // Se guarda al momento, sin esperar a "Guardar cambios"
-  Future<void> _handlePickPhoto() async {
-    final bool? isCamera = _showCamera
-        ? await PhotoSelector.show(context)
-        : false; // web en PC: directamente la galería
-    if (isCamera == null) return; // cerró la ventana sin elegir
-
-    // Por si falla la subida: así se vuelve a lo que había
-    final Uint8List? previousPhoto = _previewPhoto;
-    final bool previousRemoved = _photoRemoved;
-
-    try {
-      final XFile? file = await _photoService.pickImage(isCamera);
-      // Canceló en la cámara o la galería, o el panel se cerró mientras
-      if (file == null || !mounted) return;
-      setState(() {
-        _isPhotoLoading = true;
-        _photoError = null;
-        _showSettingsButton = false;
-      });
-
-      final Uint8List photo = await compressPhoto(file);
-      if (!mounted) return;
-      // Vista previa antes de subirla: el usuario la ve ya
-      setState(() {
-        _previewPhoto = photo;
-        _photoRemoved = false;
-      });
-
-      await _vaultService.saveImage(widget.item.id, photo);
-    } on PhotoException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _photoError = _photoErrorMessage(e.failure);
-        _showSettingsButton = e.failure == PhotoFailure.permanentlyDenied;
-      });
-    } catch (e) {
-      debugPrint('Error al guardar la foto: $e');
-      if (!mounted) return;
-      setState(() {
-        _previewPhoto = previousPhoto;
-        _photoRemoved = previousRemoved;
-        _photoError = 'No se pudo guardar la foto. Inténtalo de nuevo';
-      });
-    } finally {
-      // finally se ejecuta siempre: haya ido bien, mal o con return
-      if (mounted) setState(() => _isPhotoLoading = false);
-    }
-  }
-
-  // Borra la foto en Firestore. El reverso vuelve a la imagen del catálogo
-  Future<void> _handleRemovePhoto() async {
-    final Uint8List? previousPhoto = _previewPhoto;
-
-    setState(() {
-      _isPhotoLoading = true;
-      _photoError = null;
-      _showSettingsButton = false;
-      _previewPhoto = null;
-      _photoRemoved = true;
-    });
-
-    try {
-      await _vaultService.deleteImage(widget.item.id);
-    } catch (e) {
-      debugPrint('Error al quitar la foto: $e');
-      if (!mounted) return;
-      setState(() {
-        _previewPhoto = previousPhoto;
-        _photoRemoved = false;
-        _photoError = 'No se pudo quitar la foto. Inténtalo de nuevo';
-      });
-    } finally {
-      if (mounted) setState(() => _isPhotoLoading = false);
-    }
-  }
-
-  // Texto para cada motivo de fallo de PhotoService o de la compresión
-  String _photoErrorMessage(PhotoFailure failure) {
-    switch (failure) {
-      case PhotoFailure.denied:
-        return 'Necesitas dar permiso a la cámara para hacer la foto';
-      case PhotoFailure.permanentlyDenied:
-        return 'El permiso de la cámara está bloqueado. Actívalo en los ajustes';
-      case PhotoFailure.unsupportedFormat:
-        return 'Formato de imagen no compatible. Prueba con una foto JPG o PNG';
-      case PhotoFailure.tooLarge:
-        return 'La foto es demasiado grande. Prueba con otra';
-    }
-  }
-  // Vista previa a la izquierda y botones a la derecha; debajo, el error
-
 
   IconData _starIcon(int star) {
     final double rating = _rating ?? 0;
@@ -347,15 +226,7 @@ class _VaultEditSheetState extends State<VaultEditSheet> {
               const SizedBox(height: 16),
 
               // 0. Foto del frasco
-              PhotoPreview(
-                photo: _currentPhoto,
-                imageUrl: item.imageUrl,
-                isLoading: _isPhotoLoading,
-                error: _photoError,
-                showSettingsButton: _showSettingsButton,
-                onPick: _handlePickPhoto,
-                onRemove: _handleRemovePhoto
-              ),
+              PhotoSection(item: item),
               const SizedBox(height: 24),
 
               // 1. Capacidad: solo se pide si el perfume no la traía del catálogo
