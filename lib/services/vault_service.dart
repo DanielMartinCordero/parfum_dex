@@ -10,6 +10,7 @@ import '../utils/validators.dart';
 class VaultService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   static const int freeLimit = 5; //Límite del plan gratis
+  static const int recentDays = 30; // Días del filtro "Últimos 30 días"
 
   // Metodo que nos devuelve la referencia a la subcolección
   // del usuario logueado en este instante.
@@ -44,12 +45,29 @@ class VaultService {
   }
   // Usamos un Stream para escuchar los cambios en tiempo real, pues desde explore_screen
   // se harán cambios que deben ser visibles en vault_screen
-  Stream<List<VaultItem>> streamUserVault() {
+  //
+  // Con onlyRecent a true, solo trae los añadidos en los últimos
+  // recentDays días (consulta de rango sobre una fecha)
+  Stream<List<VaultItem>> streamUserVault({bool onlyRecent = false}) {
     // Limitamos la consulta a los 5 últimos añadidos por si acaso,
     // ordenados por la fecha de añadido (el más reciente primero)
-    return _userVaultRef
+    Query<VaultItem> query = _userVaultRef
         .orderBy('addedAt', descending: true)
-        .limit(freeLimit)
+        .limit(freeLimit);
+
+    if (onlyRecent) {
+      final DateTime since =
+          DateTime.now().subtract(const Duration(days: recentDays));
+      // El rango y el orderBy van sobre el mismo campo (addedAt), así que
+      // basta el índice simple que Firestore crea solo: no hace falta
+      // declarar un índice compuesto
+      query = query.where(
+        'addedAt',
+        isGreaterThanOrEqualTo: Timestamp.fromDate(since),
+      );
+    }
+
+    return query
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }

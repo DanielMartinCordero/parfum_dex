@@ -32,6 +32,8 @@ class _VaultScreenState extends State<VaultScreen> {
   String? _errorMessage;
   // Activado desde el botón "Editar armario"
   bool _isEditing = false;
+  // Filtro "Últimos 30 días": cambia la consulta que escuchamos
+  bool _onlyRecent = false;
 
   @override
   void initState() {
@@ -82,7 +84,8 @@ class _VaultScreenState extends State<VaultScreen> {
     _vaultSubscription?.cancel();
 
     // 2. Nos suscribimos en tiempo real a la colección vault del usuario
-    _vaultSubscription = _vaultService.streamUserVault().listen(
+    _vaultSubscription =
+        _vaultService.streamUserVault(onlyRecent: _onlyRecent).listen(
           (items) {
         if (!mounted) return;
         setState(() {
@@ -100,6 +103,13 @@ class _VaultScreenState extends State<VaultScreen> {
         });
       },
     );
+  }
+
+  // Al activar o quitar el filtro, cancelamos la escucha anterior y nos
+  // suscribimos a la nueva consulta (_subscribeToVault ya cancela la vieja)
+  void _toggleRecentFilter(bool selected) {
+    setState(() => _onlyRecent = selected);
+    _subscribeToVault();
   }
 
   @override
@@ -191,10 +201,13 @@ class _VaultScreenState extends State<VaultScreen> {
       );
     }
 
-    final bool isFull = _vaultItems.length >= VaultService.freeLimit;
+    // Con el filtro puesto solo vemos una parte del armario, así que no
+    // sabemos si está lleno. El detalle vuelve a comprobar el límite al añadir
+    final bool isFull =
+        !_onlyRecent && _vaultItems.length >= VaultService.freeLimit;
 
-    // FASE 2: VACÍO
-    if (_vaultItems.isEmpty) {
+    // FASE 2: VACÍO (de verdad, no porque el filtro lo deje vacío)
+    if (_vaultItems.isEmpty && !_onlyRecent) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32.0),
@@ -237,8 +250,16 @@ class _VaultScreenState extends State<VaultScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Mi Armario (${_vaultItems.length}/${VaultService.freeLimit})',
+                _onlyRecent
+                    ? 'Mi Armario (${_vaultItems.length} recientes)'
+                    : 'Mi Armario (${_vaultItems.length}/${VaultService.freeLimit})',
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              FilterChip(
+                label: const Text('Últimos ${VaultService.recentDays} días'),
+                selected: _onlyRecent,
+                onSelected: _toggleRecentFilter,
               ),
               const SizedBox(height: 12),
               Row(
@@ -289,7 +310,20 @@ class _VaultScreenState extends State<VaultScreen> {
           ),
         ),
         Expanded(
-          child: ListView.separated(
+          child: _vaultItems.isEmpty
+              // Solo llega aquí con el filtro puesto (sin él se ve la FASE 2)
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text(
+                      'No has añadido perfumes en los últimos '
+                      '${VaultService.recentDays} días.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ),
+                )
+              : ListView.separated(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             itemCount: _vaultItems.length,
             separatorBuilder: (context, index) => const SizedBox(height: 20),
