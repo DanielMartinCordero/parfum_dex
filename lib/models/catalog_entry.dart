@@ -1,4 +1,5 @@
 import '../utils/search_normalizer.dart';
+import 'perfume.dart';
 
 /// Resumen de un perfume dentro del índice catalog/searchIndex.
 /// Solo lleva lo que necesitan la tarjeta del catálogo y el buscador;
@@ -30,6 +31,19 @@ class CatalogEntry {
     required this.searchWords,
     required this.searchNoteWords,
   });
+
+  // La lista paginada lee perfumes/{id} completos. Los pasamos a entrada
+  // del índice para pintarlos con la misma tarjeta que la búsqueda
+  factory CatalogEntry.fromPerfume(Perfume perfume) {
+    return CatalogEntry.fromMap({
+      'id': perfume.id,
+      'brand': perfume.brand,
+      'name': perfume.name,
+      'imageUrl': perfume.imageUrl,
+      'genre': perfume.genre,
+      'notes': [...perfume.notes.values.expand((notes) => notes)],
+    });
+  }
 
   factory CatalogEntry.fromMap(Map<String, dynamic> map) {
     final String brand = map['brand'] as String? ?? '';
