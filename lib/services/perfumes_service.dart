@@ -23,10 +23,27 @@ class PerfumesService {
   // Una página del catálogo ordenada por nombre (paginación por cursor).
   // La primera vez, startAfter es null. Para la siguiente página se pasa el
   // lastDoc que devolvió la anterior, y Firestore empieza justo detrás de él
+  //
+  // genre y season son filtros opcionales (null = sin filtrar). Cada
+  // combinación con orderBy('name') necesita su índice compuesto, declarado
+  // en firestore.indexes.json
   Future<({List<Perfume> perfumes, DocumentSnapshot<Perfume>? lastDoc})>
-      getPerfumesPage({DocumentSnapshot<Perfume>? startAfter}) async {
+      getPerfumesPage({
+    DocumentSnapshot<Perfume>? startAfter,
+    String? genre,
+    String? season,
+  }) async {
     try {
-      Query<Perfume> query = _perfumesRef.orderBy('name').limit(pageSize);
+      Query<Perfume> query = _perfumesRef;
+      if (genre != null) {
+        query = query.where('genre', isEqualTo: genre);
+      }
+      if (season != null) {
+        // season es una lista (["spring", "summer"]): arrayContains busca
+        // los perfumes cuya lista incluye esa temporada
+        query = query.where('season', arrayContains: season);
+      }
+      query = query.orderBy('name').limit(pageSize);
       if (startAfter != null) {
         query = query.startAfterDocument(startAfter);
       }

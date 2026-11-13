@@ -7,6 +7,7 @@ import '../models/catalog_entry.dart';
 import '../models/perfume.dart';
 import '../services/catalog_search_service.dart';
 import '../services/perfumes_service.dart';
+import '../widgets/catalog_filters.dart';
 import '../widgets/perfume_card.dart';
 import '../widgets/search_bar_widget.dart';
 
@@ -17,7 +18,7 @@ import '../widgets/search_bar_widget.dart';
 // de escritorio: panel a la izquierda y tarjetas grandes
 const double _wideBreakpoint = 900;
 
-// Ancho del panel izquierdo, reservado para los filtros (notas, género...)
+// Ancho del panel izquierdo de los filtros
 const double _sidePanelWidth = 260;
 
 // Máximo de columnas en PC. Con 6 columnas se ven unas 12-18 tarjetas a la vez
@@ -61,6 +62,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool _isLoadingPage = false;
   bool _pageFailed = false;
 
+  // --- Filtros de la lista (null = sin filtrar) ---
+  String? _genre;
+  String? _season;
+  // Sube cada vez que cambian los filtros. Si llega una página pedida con
+  // los filtros anteriores, su número ya no coincide y se descarta
+  int _queryVersion = 0;
+
   @override
   void initState() {
     super.initState();
@@ -89,9 +97,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
       _pageFailed = false;
     });
 
+    // Apuntamos para qué filtros es esta petición
+    final int version = _queryVersion;
     try {
-      final page = await _perfumesService.getPerfumesPage(startAfter: _lastDoc);
-      if (!mounted) return;
+      final page = await _perfumesService.getPerfumesPage(
+        startAfter: _lastDoc,
+        genre: _genre,
+        season: _season,
+      );
+      // Si mientras esperábamos cambiaron los filtros, esta página ya no
+      // pinta nada: la ignoramos
+      if (!mounted || version != _queryVersion) return;
       setState(() {
         _pageEntries.addAll(page.perfumes.map(CatalogEntry.fromPerfume));
         _lastDoc = page.lastDoc ?? _lastDoc;
@@ -100,13 +116,44 @@ class _ExploreScreenState extends State<ExploreScreen> {
         _isLoadingPage = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || version != _queryVersion) return;
       // Conservamos lo ya cargado; el pie de la lista ofrece "Reintentar"
       setState(() {
         _isLoadingPage = false;
         _pageFailed = true;
       });
     }
+  }
+
+  // Cambiar un filtro es otra consulta: se tira lo cargado y se empieza
+  // desde la primera página, con el cursor a null
+  void _changeFilters({required String? genre, required String? season}) {
+    if (genre == _genre && season == _season) return;
+    setState(() {
+      _genre = genre;
+      _season = season;
+      _queryVersion++; // invalida la página que pudiera estar en camino
+      _pageEntries.clear();
+      _lastDoc = null;
+      _hasMore = true;
+      _isLoadingPage = false;
+      _pageFailed = false;
+    });
+    _loadNextPage();
+  }
+
+  // Los chips del catálogo, listos para el panel (PC) o para debajo del
+  // buscador (móvil). Pulsar el chip marcado lo desmarca (null = todos)
+  Widget _buildFilters({required bool vertical}) {
+    return CatalogFilters(
+      genre: _genre,
+      season: _season,
+      vertical: vertical,
+      // La búsqueda va sobre el índice, que no sabe de temporadas
+      enabled: _searchQuery.isEmpty,
+      onGenreChanged: (genre) => _changeFilters(genre: genre, season: _season),
+      onSeasonChanged: (season) => _changeFilters(genre: _genre, season: season),
+    );
   }
 
   void _clearSearch() {
@@ -162,9 +209,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
             return Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(
+                SizedBox(
                   width: _sidePanelWidth,
-                  child: _FiltersPanel(),
+                  child: CatalogFiltersPanel(
+                    child: _buildFilters(vertical: true),
+                  ),
                 ),
                 const VerticalDivider(width: 1),
                 Expanded(
@@ -218,6 +267,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
             onClear: _clearSearch,
           ),
         ),
+        // Móvil: los chips debajo del buscador (en PC van en el panel).
+        // Mientras se busca se ocultan, porque no se aplican a la búsqueda
+        if (!isWide && _searchQuery.isEmpty) _buildFilters(vertical: false),
         Expanded(
           // Sin texto: lista paginada. Con texto: búsqueda en el índice
           child: _searchQuery.isEmpty
@@ -237,7 +289,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
       if (_isLoadingPage) {
         return const Center(child: CircularProgressIndicator());
       }
-      return _buildMessage('No hay perfumes en el catálogo.');
+      return _buildMessage(
+        _genre != null || _season != null
+            ? 'No hay perfumes con estos filtros.'
+            : 'No hay perfumes en el catálogo.',
+      );
     }
 
     // Pie de la lista: según el estado, cargando, error o "Cargar más"
@@ -386,35 +442,6 @@ class _ExploreScreenState extends State<ExploreScreen> {
           ElevatedButton(
             onPressed: onRetry,
             child: const Text('Reintentar'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Hueco reservado para los filtros (notas, género, temporada...).
-// De momento solo indica lo que vendrá.
-class _FiltersPanel extends StatelessWidget {
-  const _FiltersPanel();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Filtros',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Próximamente: notas, género y temporada.',
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
           ),
         ],
       ),
