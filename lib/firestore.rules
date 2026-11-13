@@ -23,7 +23,8 @@ service cloud.firestore {
     // ---------- Catálogo (solo lectura) ----------
     match /perfumes/{perfumeId} {
       allow get: if signedIn();
-      // getPerfumes() usa limit 50: más no se puede pedir.
+      // getPerfumesPage() pide páginas de 48 (PerfumesService.pageSize):
+      // más de 50 por consulta no se puede pedir.
       allow list: if signedIn() && smallList(50);
       allow write: if false;
     }
