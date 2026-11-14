@@ -71,27 +71,52 @@ class VaultService {
         .snapshots()
         .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
   }
-  Future<void> addPerfumeToVault(Perfume perfume) async{
-    try{
-      final newPerfume = VaultItem(
-        id: '',
-        perfumeId: perfume.id,
-        brand: perfume.brand,
-        name: perfume.name,
-        imageUrl: perfume.imageUrl,
-        // Si el perfume no trae ml, quedan en null hasta que el usuario los añada
-        capacityMl: perfume.nominalMl,
-        remainingMl: perfume.nominalMl?.toDouble(),
-        addedAt: DateTime.now(), // Asignamos la fecha exacta de ahora
-      );
-      await _userVaultRef.add(newPerfume);
-      print("Perfume añadido con éxito");
-    }
-    catch(e){
-      print('Error al añadir el perfume a la bolsa: $e');
-      rethrow;
+  // IDs de los huecos del armario: slot1, slot2... hasta freeLimit.
+  // Las reglas de Firestore (lib/firestore.rules) solo dejan crear frascos
+  // con uno de estos IDs: así el límite lo impone el servidor y no solo la
+  // app. Si cambia freeLimit, hay que cambiar también el '^slot[1-5]$' de
+  // las reglas.
+  static List<String> get _slotIds =>
+      [for (int i = 1; i <= freeLimit; i++) 'slot$i'];
+
+  // Guarda el perfume en el primer hueco libre.
+  //
+  // No se lee antes qué huecos están ocupados (serían lecturas de pago y
+  // descargar las fotos): se intenta escribir en cada hueco por orden. Si el
+  // hueco ya tiene un frasco, las reglas rechazan la escritura con
+  // 'permission-denied' y se prueba el siguiente. Es la misma técnica que
+  // usa UsersService.claimUsername con los nombres de usuario.
+  Future<void> addPerfumeToVault(Perfume perfume) async {
+    final newPerfume = VaultItem(
+      id: '',
+      perfumeId: perfume.id,
+      brand: perfume.brand,
+      name: perfume.name,
+      imageUrl: perfume.imageUrl,
+      // Si el perfume no trae ml, quedan en null hasta que el usuario los añada
+      capacityMl: perfume.nominalMl,
+      remainingMl: perfume.nominalMl?.toDouble(),
+      addedAt: DateTime.now(), // Asignamos la fecha exacta de ahora
+    );
+
+    for (final String slotId in _slotIds) {
+      try {
+        // doc(id).set() en lugar de add(): add() inventa un ID aleatorio,
+        // y las reglas ya solo aceptan los IDs de los huecos
+        await _userVaultRef.doc(slotId).set(newPerfume);
+        print("Perfume añadido con éxito en $slotId");
+        return;
+      } on FirebaseException catch (e) {
+        if (e.code != 'permission-denied') {
+          print('Error al añadir el perfume a la bolsa: $e');
+          rethrow;
+        }
+        // Hueco ocupado: probamos con el siguiente
+      }
     }
 
+    // Los 5 huecos han rechazado la escritura: el armario está lleno
+    throw Exception('No queda ningún hueco libre en el armario.');
   }
 
   // Guarda los atributos que puede editar el usuario. Recibe los valores finales

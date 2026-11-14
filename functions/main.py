@@ -12,11 +12,14 @@ Madrid basta con leer las tiendas a 2 km en vez de todas las de 40 km.
 La posición del usuario no se guarda ni se escribe en los logs.
 """
 
+import time
+
 from firebase_admin import firestore, initialize_app
 from firebase_functions import https_fn, options
 from google.cloud.firestore_v1.base_query import FieldFilter
 
 import nearby
+import rate_limit
 
 # Firebase solo despliega las funciones que encuentra en main.py: este import
 # es lo que hace que detecte el kill switch de facturación.
@@ -45,6 +48,11 @@ options.set_global_options(
 
 STORES = "stores"
 
+# Llamadas recientes de cada usuario: {uid: [instantes]}. Es una variable
+# global, así que vive mientras viva esta copia de la función y se comparte
+# entre todas las peticiones que atiende (ver rate_limit.py).
+_recent_calls = {}
+
 
 # enforce_app_check: solo atiende peticiones que traen un token de App Check
 # válido, es decir, que vienen de la app de verdad (no de un script).
@@ -58,6 +66,18 @@ def nearbyStores(req: https_fn.CallableRequest) -> dict:  # noqa: N802 (nombre q
         raise https_fn.HttpsError(
             code=https_fn.FunctionsErrorCode.UNAUTHENTICATED,
             message="Hay que iniciar sesión para buscar perfumerías.",
+        )
+
+    # Como mucho rate_limit.MAX_CALLS búsquedas por usuario y minuto. La app
+    # guarda el resultado 30 minutos, así que un usuario normal no se acerca;
+    # esto frena a quien llame en bucle con un token válido. Va antes de tocar
+    # Firestore: una llamada rechazada no cuesta ninguna lectura.
+    # time.monotonic() es un reloj que nunca va hacia atrás (el de la hora
+    # normal puede saltar si el servidor se ajusta).
+    if not rate_limit.allow_call(_recent_calls, req.auth.uid, time.monotonic()):
+        raise https_fn.HttpsError(
+            code=https_fn.FunctionsErrorCode.RESOURCE_EXHAUSTED,
+            message="Demasiadas búsquedas seguidas. Espera un minuto.",
         )
 
     center = nearby.parse_center(req.data)

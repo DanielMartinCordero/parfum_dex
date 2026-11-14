@@ -37,15 +37,23 @@ service cloud.firestore {
 
     // stores: sin bloque = denegado. Solo la lee la Cloud Function (Admin SDK).
 
-    // ---------- Usernames (sin cambios de lógica) ----------
+    // ---------- Usernames ----------
+    // Un usuario = un handle. El handle y el perfil se crean juntos y se
+    // borran juntos (mismo batch), así nadie puede acaparar nombres.
     match /usernames/{handle} {
       allow create: if signedIn()
         && handle.matches('^[a-z0-9]{3,30}$')
         && request.resource.data.keys().hasOnly(['uid', 'createdAt'])
         && request.resource.data.uid == request.auth.uid
-        && request.resource.data.createdAt == request.time;
+        && request.resource.data.createdAt == request.time
+        // El handle tiene que ser el username de MI perfil al terminar el
+        // batch. Como el username del perfil no se puede cambiar, no se puede
+        // reservar un segundo handle teniendo ya perfil.
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.username == handle;
       allow update: if false;
-      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+      // Solo se libera el handle si en el mismo batch se borra el perfil.
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid
+        && !existsAfter(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
     // ---------- Perfil ----------
@@ -57,6 +65,11 @@ service cloud.firestore {
         && d.displayName is string && d.displayName.size() <= 50
         && d.username is string && d.username.matches('^[a-z0-9]{3,30}$')
         && optString(d, 'email', 254)
+        // Las fechas tienen que ser fechas: sin esto se podía guardar
+        // cualquier cosa (hasta 1 MB de texto) en estos dos campos.
+        && d.createdAt is timestamp
+        && (!('lastSearchAt' in d) || d.lastSearchAt == null
+            || d.lastSearchAt is timestamp)
         && (!('isPublic' in d) || d.isPublic is bool)
         && optString(d, 'genre', 40)
         && optString(d, 'scentPreference', 40)
@@ -76,12 +89,17 @@ service cloud.firestore {
         && validProfile(request.resource.data)
         && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == request.auth.uid;
 
-      // El username no se puede cambiar editando el perfil a mano.
+      // El username y la fecha de alta no se pueden cambiar editando el
+      // perfil a mano.
       allow update: if isUser(userId)
         && validProfile(request.resource.data)
-        && request.resource.data.username == resource.data.username;
+        && request.resource.data.username == resource.data.username
+        && request.resource.data.createdAt == resource.data.createdAt;
 
-      allow delete: if isUser(userId);
+      // Borrar el perfil obliga a liberar su handle en el mismo batch: no
+      // pueden quedar handles reservados sin perfil.
+      allow delete: if isUser(userId)
+        && !existsAfter(/databases/$(database)/documents/usernames/$(resource.data.username));
 
       // ---------- Armario ----------
       function validVaultItem(d) {
@@ -107,7 +125,23 @@ service cloud.firestore {
       match /vault/{itemId} {
         // Sin smallList: count() no lleva limit. Son datos propios y acotados.
         allow read: if isUser(userId);
-        allow create, update: if isUser(userId) && validVaultItem(request.resource.data);
+
+        // Límite del plan gratis (VaultService.freeLimit): un frasco nuevo
+        // solo puede ocupar uno de 5 huecos con ID fijo (slot1..slot5). Como
+        // no existen más IDs válidos, no se pueden crear más de 5, y no hace
+        // falta contar documentos (contar en las reglas costaría lecturas).
+        allow create: if isUser(userId)
+          && itemId.matches('^slot[1-5]$')
+          && validVaultItem(request.resource.data);
+
+        // Editar no puede convertir un frasco en otro: el perfume y la fecha
+        // de alta no cambian. Así un set() sobre un hueco ocupado se rechaza
+        // en vez de machacar el frasco que había.
+        allow update: if isUser(userId)
+          && validVaultItem(request.resource.data)
+          && request.resource.data.perfumeId == resource.data.perfumeId
+          && request.resource.data.addedAt == resource.data.addedAt;
+
         allow delete: if isUser(userId);
       }
     }

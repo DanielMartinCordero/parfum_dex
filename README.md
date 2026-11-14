@@ -8,9 +8,9 @@ Built with **Flutter** and **Firebase** (Authentication + Cloud Firestore). Runs
 
 - Onboarding (3 swipeable pages, shown only on first launch) and a splash screen.
 - Email/password sign-up and sign-in, with specific messages for the common errors (email already in use, weak password, invalid credentials).
-- Catalog of perfumes as a grid, with in-memory search by name, brand or note.
+- Catalog of perfumes as a grid, in alphabetical order and in pages of 48 with a **Cargar más** (load more) button, genre and season filters, plus in-memory search by name, brand or note.
 - Perfume detail: olfactory pyramid, seasons and retail offers. The URL carries the perfume id, so it survives a page reload on web.
-- Personal vault: add perfumes from the detail screen; the list updates in real time. Free tier limited to 5 perfumes.
+- Personal vault: add perfumes from the detail screen; the list updates in real time. Free tier limited to 5 perfumes. A **Últimos 30 días** (last 30 days) chip shows only the bottles added in the last 30 days.
 - Bottle photos: take or pick a photo of each bottle in the vault. It is compressed on the device and shown on the back of the card instead of the catalog image.
 - Nearby perfume shops (at the end of every perfume detail): on tap, asks for location permission, finds the 5 closest of ~1,100 shops in Spain (OpenStreetMap data), shows them on a map and in a list sorted by distance, and opens a card with address, opening hours, phone and directions. If the device cannot give its position, it offers the area of the last search.
 - Profile: view and edit your display name, see and delete the saved search area, sign out.
@@ -38,7 +38,8 @@ lib/
                        image_compression/ (isolate on native, picker on web)
   screens/             splash, onboarding, login, register, home_shell,
                        explore (catalog), perfume_detail, vault, profile
-  widgets/             perfume_card, vault_item_card, search_bar_widget
+  widgets/             perfume_card, vault_item_card, search_bar_widget,
+                       catalog_filters (genre and season chips, side panel)
     nearby_stores/     section (state machine), blurred placeholder,
                        flutter_map map, sorted list, shop details sheet
     vault_card/        flip card (front, back), edit sheet,
@@ -66,9 +67,9 @@ tools/stores/          Node scripts that geocode and load the shops
 - **Typed Firestore access.** Every service creates its collection reference once with `withConverter`, using the model's `fromFirestore` / `toFirestore` (`Perfume`, `UserProfile`, `VaultItem`). The app works with objects, not raw maps.
 - **go_router.** It declares the whole route table in one place, supports URLs with parameters on web (`/explore/detail/:id`), and expresses the auth guard as a single `redirect` function. It is maintained by the Flutter team. The three tabs use `StatefulShellRoute`, which keeps each tab alive when switching.
 - **`go` instead of `push` for the detail.** On web, `push` does not update the browser URL, so reloading would lose the screen. The detail is a nested route under the catalog, so the back button still returns to it.
-- **Search over a single index document.** Firestore cannot search text inside a field, so the catalog screen downloads `catalog/searchIndex` once per session (1 read), a summary of every perfume (`CatalogEntry`), and searches it in memory. `CatalogSearchService` is a singleton, so the index stays loaded across screens. Results are ranked: name starts with the query, then word prefixes, then substrings, then notes. The full perfume is read only when its detail opens.
-- **Catalog uses a one-off `Future`; the vault uses a `Stream`.** Catalog data rarely changes, so reading once saves reads. The vault changes from another screen (the detail), so it listens with a manual subscription that is cancelled in `dispose()`.
-- **Wide-screen catalog (provisional).** From 900 px wide, the catalog shows a left panel reserved for future filters (notes, genre, season), and cards up to 220×320 px in at most 6 columns, centered with empty strips at the sides. Fewer cards on screen also keeps web scrolling smooth (see Known limitations). This logic lives in `explore_screen.dart` for now; the planned redesign will move layout decisions to one shared place.
+- **Search over a single index document.** Firestore cannot search text inside a field, so the first time the user types in the search bar, the catalog screen downloads `catalog/searchIndex` (1 read per session), a summary of every perfume (`CatalogEntry`), and searches it in memory. Without a search, the screen shows the paginated list instead (see [Firestore queries](#firestore-queries)), so a user who never searches never downloads the index. `CatalogSearchService` is a singleton, so the index stays loaded across screens. Results are ranked: name starts with the query, then word prefixes, then substrings, then notes. The full perfume is read only when its detail opens.
+- **Catalog reads once; the vault listens.** Each screen's choice is explained in [Firestore queries](#firestore-queries).
+- **Wide-screen catalog (provisional).** From 900 px wide, the catalog shows the genre and season filters in a left panel (on phones they are two rows of chips under the search bar), and cards up to 220×320 px in at most 6 columns, centered with empty strips at the sides. Fewer cards on screen also keeps web scrolling smooth (see Known limitations). This logic lives in `explore_screen.dart` for now; the planned redesign will move layout decisions to one shared place.
 - **Errors are not swallowed in the vault checks.** If the duplicate or limit check cannot run (offline, permissions), nothing is added and the user sees an error.
 - **Nearby shops go through a Cloud Function.** Firestore cannot query by radius, so each shop stores its `geohash` (nearby points share a prefix) plus its 3-, 4- and 5-character prefixes, which are the map "cells" it falls in. The function `nearbyStores` (Python) works out which cells cover the search circle, fetches the shops in those cells with a single `in` query, and drops the ones outside the circle. It tries 2, 10, 25 and 40 km and stops at the first radius with 5 shops, so a search in a city centre reads only the shops within 2 km. Clients cannot read `stores` at all, so nobody can download the whole collection.
 - **Location is asked for only on tap,** never when a detail opens. The result is cached in memory for 30 minutes and shared by every perfume detail; the refresh button searches again. The device position is never stored: only a rounded area (2 decimals, about 1 km) is saved in the user's own profile, so the next search can fall back to it, and the profile has a button to delete it.
@@ -94,6 +95,43 @@ notes: { top: [...], heart: [...], base: [...] }
 ```
 
 The catalog shipped with the maintainer's Firebase project is **sample data**: external image URLs and illustrative prices.
+
+## Firestore queries
+
+The content collection is `perfumes` (993 documents in the demo catalog). Every query lives in a service; screens never build them.
+
+| Query | Where it is used | Code |
+|---|---|---|
+| **`orderBy` + `limit`** | Vault tab: the 5 most recent bottles, newest first | `VaultService.streamUserVault()`: `orderBy('addedAt', descending: true).limit(freeLimit)` |
+| **Range on a date** | Vault tab, **Últimos 30 días** chip: only the bottles added in the last 30 days | `VaultService.streamUserVault(onlyRecent: true)` adds `where('addedAt', isGreaterThanOrEqualTo: <now − 30 days>)` |
+| **Pagination with `startAfterDocument`** | Catalog tab with an empty search bar: the whole catalog in alphabetical order, 48 at a time, with a **Cargar más** button | `PerfumesService.getPerfumesPage()`: `orderBy('name').limit(48)`, then `.startAfterDocument(lastDoc)` for each next page |
+| **`where` with two conditions** | Catalog tab, genre and season chips: for example, women's perfumes for summer. It paginates like the full list | `PerfumesService.getPerfumesPage(genre: ..., season: ...)`: `where('genre', isEqualTo: ...).where('season', arrayContains: ...).orderBy('name').limit(48)` |
+
+Notes on each one:
+
+- **Pagination.** The service returns the page and its last document; the screen keeps that document as the cursor and passes it back for the next page. A page with fewer than 48 perfumes means there are no more, and the button is replaced by an end-of-catalog message. 48 fills complete rows with 2, 3, 4 or 6 columns and stays under the 50 per query that the security rules allow (`smallList(50)`). The search bar still searches the index document, because Firestore cannot search text inside a field.
+- **Date range.** The range and the `orderBy` are on the same field (`addedAt`), so the single-field index that Firestore creates automatically is enough: no composite index is needed. While the chip is on, the vault only sees part of the bottles, so it does not show the "limit reached" state; the detail screen still checks the limit with `count()` before adding.
+- **Filters.** `genre` and `season` only take a few fixed values (`male`/`female`/`unisex` and `spring`/`summer`/`fall`/`winter`, checked by the seeder), so they are chips instead of drop-down lists. `season` is a list, so its condition is `arrayContains`. Tapping the selected chip clears that filter. Changing a filter is a different query: the screen drops the loaded pages and starts again from the first one, and a page that was still loading for the old filters is discarded. The filters apply to the paginated list, not to the search, because the search index does not store seasons.
+- **Composite indexes.** Filtering on one field and ordering by another needs a composite index: the matching documents must be together in the index and already sorted by name. The user can pick genre, season or both, so there are three indexes, declared in [`firestore.indexes.json`](firestore.indexes.json) (referenced from `firebase.json`) and deployed with `firebase deploy --only firestore:indexes`, never created from the console:
+
+  | Filters | Index |
+  |---|---|
+  | Genre | `genre ASC, name ASC` |
+  | Season | `season CONTAINS, name ASC` |
+  | Both | `genre ASC, season CONTAINS, name ASC` |
+
+  The vault queries and the unfiltered catalog need no composite index: they filter and order on the same field, or only order.
+
+### Listening (`snapshots`) or reading once (`get`)
+
+| Screen | Choice | Why |
+|---|---|---|
+| Vault | **Listens** (`snapshots()`) | The vault changes from another screen (the perfume detail adds bottles) and from its own edit sheet, and the list must show it at once. It is cheap to listen to: at most 5 small documents of one user. The subscription is cancelled in `dispose()`. |
+| Vault with **Últimos 30 días** | **Listens** | Same screen and same reasons. Turning the chip on or off cancels the current subscription and opens one for the new query, so there is never more than one listener. |
+| Catalog list (paginated) | **Reads once** (`get()`) | The catalog is read-only for users and only changes when the seeder runs. Listening would keep a connection open for data that does not change, and every page would need its own listener, which does not fit cursor pagination. |
+| Catalog search | **Reads once** | `catalog/searchIndex` is one document, read the first time the user types and kept in memory for the whole session. |
+| Perfume detail | **Reads once** | The perfume is read by id when the detail opens. Its data does not change while the user is looking at it. |
+| Profile | **Reads once** | Only the user edits the profile, from this same screen, so after a save the screen already has the new data. |
 
 ## Location: GPS, network and the fused provider
 
@@ -170,9 +208,9 @@ Choose one:
   1. Create a Firebase project and enable **Authentication > Email/Password** and **Firestore Database**.
   2. Install the FlutterFire CLI and run `flutterfire configure --platforms=android,web`.
      When asked for the Android package name, use `com.perfumedex.app`, or change `applicationId` in `android/app/build.gradle.kts` to match the one you register.
-  3. Publish the rules in `lib/firestore.rules` (Firebase console > Firestore > Rules, or `firebase deploy --only firestore:rules`).
+  3. Publish the rules in `lib/firestore.rules` and the composite indexes in `firestore.indexes.json` with `firebase deploy --only firestore`. The indexes take a few minutes to build; until then the catalog filters show an error.
   4. Load the perfume shops: in `tools/stores`, run `npm install`, then `node seed_stores.mjs <shops.json>` to preview and add `--upload` to write them (same service-account key, saved as `tools/stores/serviceAccountKey.json`). Then deploy the function (it needs the Blaze plan). It is written in Python 3.14: in `functions`, create the virtual environment the Firebase CLI expects with `py -3.14 -m venv venv` (macOS/Linux: `python3.14 -m venv venv`), install the dependencies with `venv\Scripts\pip install -r requirements.txt` (macOS/Linux: `venv/bin/pip`), then run `firebase deploy --only functions` from the project root.
-  5. Load the catalog with the seeder in `tools/seeder` (`npm install`, then `npm run dry-run` and `npm run seed`). It needs a service-account key at `tools/seeder/serviceAccountKey.json` and a perfumes JSON file (default `data/perfumes_demo.json`, or pass `--data <file>`); both are git-ignored, and the demo dataset is not in the repo. It writes both `perfumes` and `catalog/searchIndex`. The catalog screen lists what is in the index, so perfumes added by hand in the console do not appear there.
+  5. Load the catalog with the seeder in `tools/seeder` (`npm install`, then `npm run dry-run` and `npm run seed`). It needs a service-account key at `tools/seeder/serviceAccountKey.json` and a perfumes JSON file (default `data/perfumes_demo.json`, or pass `--data <file>`); both are git-ignored, and the demo dataset is not in the repo. It writes both `perfumes` and `catalog/searchIndex`. The catalog list reads `perfumes`, but the search reads the index, so a perfume added by hand in the console appears in the list and not in the search results.
 
 ### 3. Run
 
@@ -203,9 +241,9 @@ cd functions && venv\Scripts\python -m unittest -v
 
 1. **First launch:** swipe through the three onboarding pages, or skip. It is not shown again.
 2. **Register** with an email, a display name and a password (6 or more characters), or **sign in** if you already have an account.
-3. **Catalog tab:** browse the grid and use the search bar (name, brand or note). Tap a perfume to open its detail.
+3. **Catalog tab:** browse the grid in alphabetical order and tap **Cargar más** at the end for the next 48, narrow it with the genre and season chips, or use the search bar (name, brand or note). Tap a perfume to open its detail.
 4. **Detail:** see notes, seasons and offers, and tap **Añadir a mi armario** (add to my wardrobe) to add it to your vault. Duplicates are blocked, and the free tier allows 5 perfumes.
-5. **Vault tab:** your perfumes, updated in real time. A brand-new account shows an empty state with a shortcut to the catalog. Edit a bottle to add a photo from the camera or the gallery; flip the card to see it.
+5. **Vault tab:** your perfumes, updated in real time. Tap **Últimos 30 días** to see only the ones added in the last 30 days. A brand-new account shows an empty state with a shortcut to the catalog. Edit a bottle to add a photo from the camera or the gallery; flip the card to see it.
 6. **Nearby shops:** at the bottom of a perfume detail, tap **Ver perfumerías cercanas** and allow location. Tap a marker or a row of the list to open the shop card.
 7. **Profile tab:** edit your display name, delete the saved search area, or sign out.
 
@@ -218,7 +256,7 @@ cd functions && venv\Scripts\python -m unittest -v
 
 - Display names are not unique.
 - If creating the profile document fails right after sign-up, the account exists without a profile and the profile screen shows an error.
-- The 5-perfume free limit is only enforced in the client.
+- The 5-perfume free limit is enforced by the security rules through fixed document ids (`slot1`..`slot5`). Bottles created before that change keep their random ids and do not take a slot.
 - Catalog images are external URLs; some may be unavailable. Their host does not allow CORS, so on web each image is drawn as an HTML `<img>` element, which makes scrolling heavy when many are on screen. Hosting the images ourselves with CORS would remove this.
 - Web debug mode is much slower than release; judge scrolling with `flutter run -d chrome --release`.
 - iOS is not configured.
