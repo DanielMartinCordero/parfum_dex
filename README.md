@@ -4,6 +4,8 @@ A mobile and web app for fragrance collectors: browse a perfume catalog, keep a 
 
 Built with **Flutter** and **Firebase** (Authentication + Cloud Firestore). Runs on **Android** and **Web**. iOS is not configured.
 
+**Live demo:** [perfumedex.com](https://perfumedex.com)
+
 ## Current features
 
 - Onboarding (3 swipeable pages, shown only on first launch) and a splash screen.
